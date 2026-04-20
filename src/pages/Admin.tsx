@@ -336,9 +336,23 @@ function StatusBadge({ s }: { s: AccountStatus }) {
 }
 
 function RoleBadge({ r }: { r: AppRole }) {
-  if (r === "admin") return <Badge className="bg-primary text-primary-foreground hover:bg-primary gap-1"><Shield className="h-3 w-3" />admin</Badge>;
-  if (r === "student") return <Badge variant="outline">student</Badge>;
-  return <Badge variant="outline">subscriber</Badge>;
+  if (r === "admin")
+    return (
+      <Badge className="bg-primary text-primary-foreground hover:bg-primary gap-1">
+        <Shield className="h-3 w-3" />Admin
+      </Badge>
+    );
+  if (r === "student")
+    return (
+      <Badge className="bg-accent text-accent-foreground hover:bg-accent gap-1 border-transparent">
+        🎓 Étudiant
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="gap-1 border-gain/40 text-gain bg-gain/10">
+      💳 Abonné
+    </Badge>
+  );
 }
 
 /* ================== PAYMENTS TAB (existing logic) ================== */
