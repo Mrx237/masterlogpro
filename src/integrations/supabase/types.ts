@@ -14,16 +14,214 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      payment_requests: {
+        Row: {
+          admin_note: string | null
+          amount_fcfa: number
+          created_at: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          note: string | null
+          offer: Database["public"]["Enums"]["offer_type"]
+          payer_phone: string | null
+          proof_path: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount_fcfa: number
+          created_at?: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          note?: string | null
+          offer: Database["public"]["Enums"]["offer_type"]
+          payer_phone?: string | null
+          proof_path?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount_fcfa?: number
+          created_at?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          note?: string | null
+          offer?: Database["public"]["Enums"]["offer_type"]
+          payer_phone?: string | null
+          proof_path?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          last_seen_at: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          subscription_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          last_seen_at?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          subscription_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          last_seen_at?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          subscription_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          coach_feedback: string | null
+          created_at: string
+          direction: Database["public"]["Enums"]["trade_direction"]
+          entry_price: number | null
+          error_tag: Database["public"]["Enums"]["error_tag"] | null
+          exit_price: number | null
+          fundamental_note: string | null
+          id: string
+          lot_size: number | null
+          news_event: string | null
+          news_impact: Database["public"]["Enums"]["news_impact"] | null
+          pair: string
+          result_usd: number | null
+          screenshot_path: string | null
+          sentiment: Database["public"]["Enums"]["sentiment"] | null
+          source_link: string | null
+          status: Database["public"]["Enums"]["trade_status"] | null
+          stop_loss: number | null
+          take_profit: number | null
+          technical_comment: string | null
+          trade_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coach_feedback?: string | null
+          created_at?: string
+          direction: Database["public"]["Enums"]["trade_direction"]
+          entry_price?: number | null
+          error_tag?: Database["public"]["Enums"]["error_tag"] | null
+          exit_price?: number | null
+          fundamental_note?: string | null
+          id?: string
+          lot_size?: number | null
+          news_event?: string | null
+          news_impact?: Database["public"]["Enums"]["news_impact"] | null
+          pair: string
+          result_usd?: number | null
+          screenshot_path?: string | null
+          sentiment?: Database["public"]["Enums"]["sentiment"] | null
+          source_link?: string | null
+          status?: Database["public"]["Enums"]["trade_status"] | null
+          stop_loss?: number | null
+          take_profit?: number | null
+          technical_comment?: string | null
+          trade_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coach_feedback?: string | null
+          created_at?: string
+          direction?: Database["public"]["Enums"]["trade_direction"]
+          entry_price?: number | null
+          error_tag?: Database["public"]["Enums"]["error_tag"] | null
+          exit_price?: number | null
+          fundamental_note?: string | null
+          id?: string
+          lot_size?: number | null
+          news_event?: string | null
+          news_impact?: Database["public"]["Enums"]["news_impact"] | null
+          pair?: string
+          result_usd?: number | null
+          screenshot_path?: string | null
+          sentiment?: Database["public"]["Enums"]["sentiment"] | null
+          source_link?: string | null
+          status?: Database["public"]["Enums"]["trade_status"] | null
+          stop_loss?: number | null
+          take_profit?: number | null
+          technical_comment?: string | null
+          trade_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      account_status: "pending" | "active" | "expired"
+      app_role: "admin" | "student" | "subscriber"
+      error_tag: "bad_timing" | "overtrading" | "bad_analysis" | "none"
+      news_impact: "high" | "medium" | "low" | "none"
+      offer_type: "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m"
+      payment_method: "mtn" | "orange" | "airtel"
+      payment_status: "pending" | "approved" | "rejected"
+      sentiment: "bullish" | "bearish" | "neutral"
+      trade_direction: "buy" | "sell"
+      trade_status: "win" | "loss" | "breakeven"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +348,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_status: ["pending", "active", "expired"],
+      app_role: ["admin", "student", "subscriber"],
+      error_tag: ["bad_timing", "overtrading", "bad_analysis", "none"],
+      news_impact: ["high", "medium", "low", "none"],
+      offer_type: ["formation", "sub_1m", "sub_3m", "sub_6m", "sub_12m"],
+      payment_method: ["mtn", "orange", "airtel"],
+      payment_status: ["pending", "approved", "rejected"],
+      sentiment: ["bullish", "bearish", "neutral"],
+      trade_direction: ["buy", "sell"],
+      trade_status: ["win", "loss", "breakeven"],
+    },
   },
 } as const
