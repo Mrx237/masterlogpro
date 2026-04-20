@@ -4,11 +4,10 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LineChart, Loader2 } from "lucide-react";
+import { Activity, ArrowLeft, Loader2, ShieldCheck, TrendingUp, Zap } from "lucide-react";
 
 const signupSchema = z.object({
   full_name: z.string().trim().min(2, "Nom trop court").max(80),
@@ -48,7 +47,7 @@ const Auth = () => {
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Compte créé ! Vous pouvez vous connecter.");
+    toast.success("Compte créé !");
     navigate("/dashboard");
   }
 
@@ -66,45 +65,142 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-4 bg-secondary/40">
-      <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-2 mb-6">
-          <div className="grid h-9 w-9 place-items-center rounded-md gradient-hero text-primary-foreground">
-            <LineChart className="h-4 w-4" />
+    <div className="min-h-screen grid lg:grid-cols-2 noise relative">
+      {/* ─── LEFT — visual cockpit panel ─── */}
+      <aside className="relative hidden lg:flex flex-col justify-between p-10 overflow-hidden border-r border-border/50">
+        <div className="absolute inset-0 grid-bg opacity-40" />
+        <div className="absolute top-1/4 -left-32 h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 -right-32 h-[500px] w-[500px] rounded-full bg-accent/20 blur-[120px] animate-pulse-glow" style={{ animationDelay: '1s' }} />
+
+        <div className="relative flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-brand">
+              <Activity className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
+            </div>
+            <div className="leading-none">
+              <div className="font-display font-bold text-[17px]">MasterLog<span className="text-gradient-cyan">Pro</span></div>
+              <div className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mt-0.5">Trading Cockpit</div>
+            </div>
+          </Link>
+          <Link to="/" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <ArrowLeft className="h-3 w-3" /> Accueil
+          </Link>
+        </div>
+
+        <div className="relative space-y-8">
+          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.3em] text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-glow" /> Live
           </div>
-          <span className="font-bold text-xl">MasterLog<span className="text-accent">Pro</span></span>
+          <h2 className="font-display text-4xl xl:text-5xl font-bold leading-[1.05]">
+            Le cockpit qui<br />
+            <span className="text-gradient-brand">forge la discipline</span><br />
+            des traders sérieux.
+          </h2>
+          <p className="text-muted-foreground max-w-md">
+            Documente. Mesure. Corrige. Trois étapes pour transformer ton trading en méthode reproductible.
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 max-w-md">
+            {[
+              { icon: TrendingUp, label: "Win rate", value: "68%" },
+              { icon: Zap, label: "Activation", value: "<5min" },
+              { icon: ShieldCheck, label: "Sécurisé", value: "Mobile Money" },
+            ].map((s) => (
+              <div key={s.label} className="glass rounded-xl p-3.5">
+                <s.icon className="h-4 w-4 text-primary mb-2" />
+                <div className="font-display font-bold text-sm">{s.value}</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative font-mono text-[10px] text-muted-foreground tracking-widest uppercase flex items-center gap-2">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Auth chiffrée · Aucune donnée vendue
+        </div>
+      </aside>
+
+      {/* ─── RIGHT — form ─── */}
+      <main className="flex flex-col justify-center items-center p-6 md:p-10 relative">
+        {/* Mobile header */}
+        <Link to="/" className="lg:hidden absolute top-6 left-6 flex items-center gap-2.5">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-brand">
+            <Activity className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
+          </div>
+          <span className="font-display font-bold">MasterLog<span className="text-gradient-cyan">Pro</span></span>
         </Link>
-        <Card className="p-6 shadow-elevated">
-          <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-            <TabsList className="grid grid-cols-2 w-full mb-5">
-              <TabsTrigger value="login">Connexion</TabsTrigger>
-              <TabsTrigger value="signup">Inscription</TabsTrigger>
-            </TabsList>
 
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-1.5"><Label htmlFor="li-email">Email</Label><Input id="li-email" name="email" type="email" required /></div>
-                <div className="space-y-1.5"><Label htmlFor="li-pw">Mot de passe</Label><Input id="li-pw" name="password" type="password" required /></div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />}Se connecter</Button>
-              </form>
-            </TabsContent>
+        <div className="w-full max-w-md mt-16 lg:mt-0">
+          <div className="mb-8">
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-primary mb-3">
+              {tab === "login" ? "Bon retour" : "Bienvenue"}
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">
+              {tab === "login" ? (
+                <>Connecte-toi à<br /><span className="text-gradient-cyan">ton cockpit.</span></>
+              ) : (
+                <>Crée ton compte<br /><span className="text-gradient-brand">en 30 secondes.</span></>
+              )}
+            </h1>
+          </div>
 
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-1.5"><Label htmlFor="su-name">Nom complet</Label><Input id="su-name" name="full_name" required /></div>
-                <div className="space-y-1.5"><Label htmlFor="su-email">Email</Label><Input id="su-email" name="email" type="email" required /></div>
-                <div className="space-y-1.5"><Label htmlFor="su-pw">Mot de passe</Label><Input id="su-pw" name="password" type="password" minLength={6} required /></div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />}Créer mon compte</Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </Card>
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          <Link to="/" className="hover:underline">← Retour à l'accueil</Link>
-        </p>
-      </div>
+          <div className="glass-strong rounded-2xl p-6 md:p-7 shadow-elevated">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+              <TabsList className="grid grid-cols-2 w-full mb-6 bg-background/40">
+                <TabsTrigger value="login" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary">Connexion</TabsTrigger>
+                <TabsTrigger value="signup" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary">Inscription</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="login" className="mt-0">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <FieldGroup id="li-email" label="Email" name="email" type="email" required />
+                  <FieldGroup id="li-pw" label="Mot de passe" name="password" type="password" required />
+                  <Button type="submit" className="w-full h-11 bg-gradient-brand text-primary-foreground border-0 font-semibold glow-cyan" disabled={loading}>
+                    {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Se connecter →
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="signup" className="mt-0">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <FieldGroup id="su-name" label="Nom complet" name="full_name" required />
+                  <FieldGroup id="su-email" label="Email" name="email" type="email" required />
+                  <FieldGroup id="su-pw" label="Mot de passe" name="password" type="password" minLength={6} required hint="Minimum 6 caractères" />
+                  <Button type="submit" className="w-full h-11 bg-gradient-brand text-primary-foreground border-0 font-semibold glow-cyan" disabled={loading}>
+                    {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Créer mon compte →
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            En continuant tu acceptes nos conditions d'utilisation. Aucune carte requise.
+          </p>
+        </div>
+      </main>
     </div>
   );
 };
+
+function FieldGroup({
+  id, label, name, type = "text", required, minLength, hint,
+}: { id: string; label: string; name: string; type?: string; required?: boolean; minLength?: number; hint?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+        {label}
+      </Label>
+      <Input
+        id={id} name={name} type={type} required={required} minLength={minLength}
+        className="h-11 bg-background/40 border-border/60 focus-visible:ring-primary/40 focus-visible:border-primary/40"
+      />
+      {hint && <p className="text-[10px] text-muted-foreground/70">{hint}</p>}
+    </div>
+  );
+}
 
 export default Auth;
