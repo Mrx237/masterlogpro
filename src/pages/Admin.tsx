@@ -4,11 +4,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { OFFERS, OfferKey, formatFCFA } from "@/lib/constants";
 import { toast } from "sonner";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, Shield, ShieldOff, UserCheck, UserX, TrendingUp, TrendingDown } from "lucide-react";
+
+type AppRole = "admin" | "student" | "subscriber";
+type AccountStatus = "pending" | "active" | "expired";
 
 interface PaymentRow {
   id: string; user_id: string; offer: OfferKey; amount_fcfa: number; method: string;
@@ -17,7 +24,326 @@ interface PaymentRow {
   profiles?: { email: string | null; full_name: string | null } | null;
 }
 
+interface UserRow {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  status: AccountStatus;
+  subscription_ends_at: string | null;
+  created_at: string;
+  roles: AppRole[];
+  trades_count: number;
+  total_pnl: number;
+  win_rate: number;
+}
+
 const Admin = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      <AppHeader />
+      <main className="container py-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Administration</h1>
+        <p className="text-sm text-muted-foreground mb-6">Gestion des utilisateurs et validation des paiements.</p>
+
+        <Tabs defaultValue="users" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+            <TabsTrigger value="payments">Paiements</TabsTrigger>
+          </TabsList>
+          <TabsContent value="users"><UsersTab /></TabsContent>
+          <TabsContent value="payments"><PaymentsTab /></TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+};
+
+/* ================== USERS TAB ================== */
+
+function UsersTab() {
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [active, setActive] = useState<UserRow | null>(null);
+
+  async function load() {
+    setLoading(true);
+    const [{ data: profs }, { data: roles }, { data: trades }] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+      supabase.from("trades").select("user_id, result_usd, status"),
+    ]);
+
+    const rolesMap = new Map<string, AppRole[]>();
+    (roles ?? []).forEach((r: any) => {
+      const arr = rolesMap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      rolesMap.set(r.user_id, arr);
+    });
+
+    const tradesMap = new Map<string, { count: number; pnl: number; wins: number; closed: number }>();
+    (trades ?? []).forEach((t: any) => {
+      const cur = tradesMap.get(t.user_id) ?? { count: 0, pnl: 0, wins: 0, closed: 0 };
+      cur.count += 1;
+      if (t.result_usd != null) cur.pnl += Number(t.result_usd);
+      if (t.status === "win" || t.status === "loss") {
+        cur.closed += 1;
+        if (t.status === "win") cur.wins += 1;
+      }
+      tradesMap.set(t.user_id, cur);
+    });
+
+    setUsers(
+      (profs ?? []).map((p: any): UserRow => {
+        const t = tradesMap.get(p.id) ?? { count: 0, pnl: 0, wins: 0, closed: 0 };
+        return {
+          id: p.id,
+          email: p.email,
+          full_name: p.full_name,
+          status: p.status,
+          subscription_ends_at: p.subscription_ends_at,
+          created_at: p.created_at,
+          roles: rolesMap.get(p.id) ?? [],
+          trades_count: t.count,
+          total_pnl: t.pnl,
+          win_rate: t.closed > 0 ? (t.wins / t.closed) * 100 : 0,
+        };
+      })
+    );
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = users.filter((u) => {
+    const q = search.toLowerCase();
+    return !q || u.email?.toLowerCase().includes(q) || u.full_name?.toLowerCase().includes(q);
+  });
+
+  return (
+    <Card className="shadow-card overflow-hidden">
+      <div className="p-4 border-b flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+        <div>
+          <div className="font-semibold">{users.length} utilisateur{users.length > 1 ? "s" : ""}</div>
+          <div className="text-xs text-muted-foreground">Stats agrégées sur tous les trades</div>
+        </div>
+        <Input placeholder="Rechercher email ou nom..." value={search} onChange={(e) => setSearch(e.target.value)} className="md:w-72" />
+      </div>
+
+      {loading ? (
+        <div className="p-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">Aucun utilisateur.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/60 text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="text-left">
+                <th className="px-3 py-2.5">Utilisateur</th>
+                <th className="px-3 py-2.5">Statut</th>
+                <th className="px-3 py-2.5">Rôles</th>
+                <th className="px-3 py-2.5">Trades</th>
+                <th className="px-3 py-2.5">Win rate</th>
+                <th className="px-3 py-2.5">P&L total</th>
+                <th className="px-3 py-2.5">Expire</th>
+                <th className="px-3 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((u) => (
+                <tr key={u.id} className="border-t hover:bg-secondary/30">
+                  <td className="px-3 py-2.5">
+                    <div className="font-medium">{u.full_name || "—"}</div>
+                    <div className="text-xs text-muted-foreground">{u.email}</div>
+                  </td>
+                  <td className="px-3 py-2.5"><StatusBadge s={u.status} /></td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex flex-wrap gap-1">
+                      {u.roles.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
+                      {u.roles.map((r) => <RoleBadge key={r} r={r} />)}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5">{u.trades_count}</td>
+                  <td className="px-3 py-2.5">{u.trades_count > 0 ? `${u.win_rate.toFixed(0)}%` : "—"}</td>
+                  <td className={`px-3 py-2.5 font-medium ${u.total_pnl > 0 ? "text-gain" : u.total_pnl < 0 ? "text-loss" : ""}`}>
+                    {u.total_pnl !== 0 ? (
+                      <span className="inline-flex items-center gap-1">
+                        {u.total_pnl > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        ${u.total_pnl.toFixed(2)}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td className="px-3 py-2.5 text-xs">
+                    {u.subscription_ends_at ? new Date(u.subscription_ends_at).toLocaleDateString("fr-FR") : "—"}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <Button size="sm" variant="outline" onClick={() => setActive(u)}>Gérer</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <UserManageDialog user={active} onClose={() => setActive(null)} onChanged={load} />
+    </Card>
+  );
+}
+
+function UserManageDialog({ user, onClose, onChanged }: { user: UserRow | null; onClose: () => void; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [days, setDays] = useState<string>("30");
+  const [roleToAdd, setRoleToAdd] = useState<AppRole>("subscriber");
+
+  if (!user) return null;
+
+  async function setStatus(status: AccountStatus, addDays?: number) {
+    setBusy(true);
+    const ends = addDays ? new Date(Date.now() + addDays * 86400000).toISOString() : null;
+    const update: any = { status };
+    if (addDays !== undefined) update.subscription_ends_at = ends;
+    const { error } = await supabase.from("profiles").update(update).eq("id", user!.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Compte mis à jour ✅");
+    onChanged();
+    onClose();
+  }
+
+  async function addRole(role: AppRole) {
+    setBusy(true);
+    const { error } = await supabase.from("user_roles").upsert(
+      { user_id: user!.id, role: role as any },
+      { onConflict: "user_id,role" }
+    );
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Rôle ${role} ajouté`);
+    onChanged();
+  }
+
+  async function removeRole(role: AppRole) {
+    setBusy(true);
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", user!.id).eq("role", role as any);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Rôle ${role} retiré`);
+    onChanged();
+  }
+
+  return (
+    <Dialog open={!!user} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{user.full_name || user.email}</DialogTitle>
+          <DialogDescription>{user.email}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 text-sm">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-2">
+            <MiniStat label="Trades" value={user.trades_count} />
+            <MiniStat label="Win rate" value={user.trades_count > 0 ? `${user.win_rate.toFixed(0)}%` : "—"} />
+            <MiniStat label="P&L" value={`$${user.total_pnl.toFixed(2)}`} accent={user.total_pnl > 0 ? "gain" : user.total_pnl < 0 ? "loss" : undefined} />
+          </div>
+
+          {/* Statut */}
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Statut du compte</div>
+            <div className="flex items-center gap-2 mb-3">
+              <StatusBadge s={user.status} />
+              {user.subscription_ends_at && (
+                <span className="text-xs text-muted-foreground">expire le {new Date(user.subscription_ends_at).toLocaleDateString("fr-FR")}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs">Activer pour</Label>
+                <Input type="number" min={1} value={days} onChange={(e) => setDays(e.target.value)} className="w-20 h-9" />
+                <span className="text-xs text-muted-foreground">jours</span>
+                <Button size="sm" disabled={busy} onClick={() => setStatus("active", parseInt(days) || 30)}>
+                  <UserCheck className="h-4 w-4" />Activer
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus("active")}>
+                Activer (illimité)
+              </Button>
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus("expired")}>
+                <UserX className="h-4 w-4" />Désactiver
+              </Button>
+            </div>
+          </div>
+
+          {/* Roles */}
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Rôles</div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {user.roles.length === 0 && <span className="text-xs text-muted-foreground">Aucun rôle</span>}
+              {user.roles.map((r) => (
+                <Badge key={r} variant="secondary" className="gap-1">
+                  {r}
+                  <button onClick={() => removeRole(r)} disabled={busy} className="ml-1 hover:text-destructive">×</button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Select value={roleToAdd} onValueChange={(v) => setRoleToAdd(v as AppRole)}>
+                <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">admin</SelectItem>
+                  <SelectItem value="student">student</SelectItem>
+                  <SelectItem value="subscriber">subscriber</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" disabled={busy} onClick={() => addRole(roleToAdd)}>
+                {roleToAdd === "admin" ? <Shield className="h-4 w-4" /> : null}
+                Ajouter
+              </Button>
+            </div>
+            {user.roles.includes("admin") && (
+              <p className="text-xs text-muted-foreground mt-2 inline-flex items-center gap-1">
+                <ShieldOff className="h-3 w-3" />
+                Cliquez sur le × du badge admin pour retirer les droits.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MiniStat({ label, value, accent }: { label: string; value: React.ReactNode; accent?: "gain" | "loss" }) {
+  return (
+    <div className="rounded-md border bg-secondary/30 p-2">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`font-semibold ${accent === "gain" ? "text-gain" : accent === "loss" ? "text-loss" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
+function StatusBadge({ s }: { s: AccountStatus }) {
+  if (s === "active") return <Badge className="bg-gain text-gain-foreground hover:bg-gain">Actif</Badge>;
+  if (s === "expired") return <Badge className="bg-loss text-loss-foreground hover:bg-loss">Expiré</Badge>;
+  return <Badge variant="secondary">En attente</Badge>;
+}
+
+function RoleBadge({ r }: { r: AppRole }) {
+  if (r === "admin") return <Badge className="bg-primary text-primary-foreground hover:bg-primary gap-1"><Shield className="h-3 w-3" />admin</Badge>;
+  if (r === "student") return <Badge variant="outline">student</Badge>;
+  return <Badge variant="outline">subscriber</Badge>;
+}
+
+/* ================== PAYMENTS TAB (existing logic) ================== */
+
+function PaymentsTab() {
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<PaymentRow | null>(null);
@@ -32,7 +358,6 @@ const Admin = () => {
       .select("*")
       .order("created_at", { ascending: false });
     if (data) {
-      // fetch profiles separately (no FK relation in PostgREST inferred)
       const userIds = [...new Set(data.map((r: any) => r.user_id))];
       const { data: profs } = await supabase.from("profiles").select("id, email, full_name").in("id", userIds);
       const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
@@ -72,12 +397,10 @@ const Admin = () => {
         ? new Date(Date.now() + offer.durationDays * 86400000).toISOString()
         : null;
 
-      // Upsert role
       await supabase.from("user_roles").upsert(
         { user_id: active.user_id, role: role as any },
         { onConflict: "user_id,role" }
       );
-      // Activate profile
       await supabase.from("profiles").update({
         status: "active",
         subscription_ends_at: ends,
@@ -91,56 +414,48 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Administration</h1>
-        <p className="text-sm text-muted-foreground mb-6">Validation manuelle des paiements Mobile Money.</p>
-
-        <Card className="shadow-card overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
-          ) : rows.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">Aucune demande pour le moment.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-secondary/60 text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr className="text-left">
-                    <th className="px-3 py-2.5">Date</th>
-                    <th className="px-3 py-2.5">Utilisateur</th>
-                    <th className="px-3 py-2.5">Offre</th>
-                    <th className="px-3 py-2.5">Montant</th>
-                    <th className="px-3 py-2.5">Méthode</th>
-                    <th className="px-3 py-2.5">Statut</th>
-                    <th className="px-3 py-2.5"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id} className="border-t hover:bg-secondary/30">
-                      <td className="px-3 py-2.5">{new Date(r.created_at).toLocaleString("fr-FR")}</td>
-                      <td className="px-3 py-2.5">
-                        <div className="font-medium">{r.profiles?.full_name || "—"}</div>
-                        <div className="text-xs text-muted-foreground">{r.profiles?.email}</div>
-                      </td>
-                      <td className="px-3 py-2.5">{OFFERS[r.offer]?.label}</td>
-                      <td className="px-3 py-2.5 font-medium">{formatFCFA(r.amount_fcfa)}</td>
-                      <td className="px-3 py-2.5 uppercase text-xs">{r.method}</td>
-                      <td className="px-3 py-2.5">
-                        {r.status === "pending" && <Badge variant="secondary">En attente</Badge>}
-                        {r.status === "approved" && <Badge className="bg-gain text-gain-foreground hover:bg-gain">Validé</Badge>}
-                        {r.status === "rejected" && <Badge className="bg-loss text-loss-foreground hover:bg-loss">Rejeté</Badge>}
-                      </td>
-                      <td className="px-3 py-2.5"><Button size="sm" variant="outline" onClick={() => openDetail(r)}>Examiner</Button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-      </main>
+    <Card className="shadow-card overflow-hidden">
+      {loading ? (
+        <div className="p-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+      ) : rows.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">Aucune demande pour le moment.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/60 text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="text-left">
+                <th className="px-3 py-2.5">Date</th>
+                <th className="px-3 py-2.5">Utilisateur</th>
+                <th className="px-3 py-2.5">Offre</th>
+                <th className="px-3 py-2.5">Montant</th>
+                <th className="px-3 py-2.5">Méthode</th>
+                <th className="px-3 py-2.5">Statut</th>
+                <th className="px-3 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-t hover:bg-secondary/30">
+                  <td className="px-3 py-2.5">{new Date(r.created_at).toLocaleString("fr-FR")}</td>
+                  <td className="px-3 py-2.5">
+                    <div className="font-medium">{r.profiles?.full_name || "—"}</div>
+                    <div className="text-xs text-muted-foreground">{r.profiles?.email}</div>
+                  </td>
+                  <td className="px-3 py-2.5">{OFFERS[r.offer]?.label}</td>
+                  <td className="px-3 py-2.5 font-medium">{formatFCFA(r.amount_fcfa)}</td>
+                  <td className="px-3 py-2.5 uppercase text-xs">{r.method}</td>
+                  <td className="px-3 py-2.5">
+                    {r.status === "pending" && <Badge variant="secondary">En attente</Badge>}
+                    {r.status === "approved" && <Badge className="bg-gain text-gain-foreground hover:bg-gain">Validé</Badge>}
+                    {r.status === "rejected" && <Badge className="bg-loss text-loss-foreground hover:bg-loss">Rejeté</Badge>}
+                  </td>
+                  <td className="px-3 py-2.5"><Button size="sm" variant="outline" onClick={() => openDetail(r)}>Examiner</Button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
         <DialogContent className="max-w-lg">
@@ -175,9 +490,9 @@ const Admin = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
-};
+}
 
 const Row = ({ k, v }: { k: string; v: string }) => (
   <div className="flex justify-between gap-4 border-b pb-1.5"><span className="text-muted-foreground">{k}</span><span className="text-right font-medium">{v}</span></div>
