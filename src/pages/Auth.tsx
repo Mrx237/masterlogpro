@@ -58,7 +58,7 @@ const Auth = () => {
     const parsed = loginSchema.safeParse(Object.fromEntries(fd));
     if (!parsed.success) { toast.error(parsed.error.errors[0].message); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword(parsed.data);
+    const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Connecté !");
