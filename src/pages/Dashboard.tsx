@@ -343,4 +343,105 @@ function ModuleCard({ to, tone, icon: Icon, title, desc, meta, highlight }: {
   );
 }
 
+/* ═══════════════════ CAPITAL CARD ═══════════════════ */
+function CapitalCard({ tone, initial, current, pct, onEdit }: {
+  tone: "gold" | "cyan"; initial: number; current: number; pct: number; onEdit: () => void;
+}) {
+  const positive = pct >= 0;
+  const accentText = tone === "gold" ? "text-student" : "text-primary";
+  const accentBorder = tone === "gold" ? "border-student/30" : "border-primary/30";
+  const accentBg = tone === "gold" ? "bg-student/15" : "bg-primary/15";
+  const pctColor = positive ? "text-gain" : "text-loss";
+  const pctBg = positive ? "bg-gain/10 border-gain/30" : "bg-loss/10 border-loss/30";
+  const barColor = positive ? "bg-gain" : "bg-loss";
+  const barWidth = Math.min(Math.abs(pct), 100);
+
+  return (
+    <Card className="glass-strong relative overflow-hidden p-5 md:p-6">
+      <div className={cn("absolute -right-10 -top-10 h-48 w-48 rounded-full blur-3xl", accentBg)} />
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <div className={cn("grid h-9 w-9 place-items-center rounded-lg border", accentBorder, accentBg, accentText)}>
+              <Wallet className="h-4 w-4" />
+            </div>
+            <div>
+              <div className={cn("text-[11px] uppercase tracking-[0.18em] font-mono", accentText)}>💼 Capital</div>
+              <div className="text-xs text-muted-foreground">Capital initial : ${initial.toFixed(2)}</div>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={onEdit} className="h-8 gap-1.5">
+            <Pencil className="h-3 w-3" />
+            <span className="text-xs">Modifier</span>
+          </Button>
+        </div>
+
+        <div className="flex items-end gap-3 flex-wrap">
+          <div className="font-mono font-bold text-3xl md:text-5xl tracking-tight leading-none">
+            ${current.toFixed(2)}
+          </div>
+          <div className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-md border font-mono text-sm font-semibold", pctBg, pctColor)}>
+            {positive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+            {positive ? "+" : ""}{pct.toFixed(2)}%
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="h-2 w-full rounded-full bg-secondary/50 overflow-hidden">
+            <div className={cn("h-full transition-all", barColor)} style={{ width: `${barWidth}%` }} />
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-1.5">
+            {positive
+              ? `Tu as gagné ${pct.toFixed(2)}% de ton capital initial 🚀`
+              : `Tu as perdu ${Math.abs(pct).toFixed(2)}% de ton capital initial`}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ═══════════════════ CAPITAL DIALOG ═══════════════════ */
+function CapitalDialog({ open, initial, userId, onClose, onSaved }: {
+  open: boolean; initial: number; userId: string; onClose: () => void; onSaved: (v: number) => void;
+}) {
+  const [val, setVal] = useState<string>(String(initial));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { setVal(String(initial)); }, [initial, open]);
+
+  async function save() {
+    const n = parseFloat(val);
+    if (!Number.isFinite(n) || n <= 0) return toast.error("Entre un montant valide (> 0)");
+    setBusy(true);
+    const { error } = await supabase.from("profiles").update({ initial_capital: n } as any).eq("id", userId);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Capital initial mis à jour");
+    onSaved(n);
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Capital initial</DialogTitle>
+          <DialogDescription>Sert à calculer ton % de progression (ex : +2% / -5%).</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label>Montant en USD</Label>
+          <Input type="number" min="1" step="any" value={val} onChange={(e) => setVal(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={save} disabled={busy}>
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}Enregistrer
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default Dashboard;
