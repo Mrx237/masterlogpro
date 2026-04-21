@@ -126,16 +126,28 @@ const Dashboard = () => {
             loading={loading} trades={trades} net={net} winRate={winRate}
             totalGain={totalGain} totalLoss={totalLoss}
             pendingExercises={pendingExercises} latestAnalysisTitle={latestAnalysisTitle}
+            initialCapital={initialCapital} currentCapital={currentCapital} capitalPct={capitalPct}
+            onEditCapital={() => setEditingCapital(true)}
           />
         ) : (
           <SubscriberDashboard
             loading={loading} trades={trades} net={net} winRate={winRate}
             totalGain={totalGain} totalLoss={totalLoss} wins={wins} losses={losses}
+            initialCapital={initialCapital} currentCapital={currentCapital} capitalPct={capitalPct}
+            onEditCapital={() => setEditingCapital(true)}
           />
         )}
 
         <MotivationBanner tone={studentMode ? "gold" : "cyan"} />
       </main>
+
+      <CapitalDialog
+        open={editingCapital}
+        initial={initialCapital}
+        userId={user?.id ?? ""}
+        onClose={() => setEditingCapital(false)}
+        onSaved={(v) => setInitialCapital(v)}
+      />
     </div>
   );
 };
