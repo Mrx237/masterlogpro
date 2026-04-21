@@ -4,13 +4,17 @@ import { AppHeader } from "@/components/AppHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { MotivationBanner } from "@/components/MotivationBanner";
 import { EquityChart } from "@/components/EquityChart";
-import { Plus, Lock, Loader2, GraduationCap, BookOpen, LineChart, ListChecks, MessageSquare, Target, TrendingUp, ArrowRight } from "lucide-react";
+import { Plus, Lock, Loader2, GraduationCap, BookOpen, LineChart, ListChecks, MessageSquare, Target, TrendingUp, TrendingDown, ArrowRight, Wallet, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Trade {
   id: string;
