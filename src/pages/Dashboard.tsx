@@ -31,11 +31,13 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [pendingExercises, setPendingExercises] = useState(0);
   const [latestAnalysisTitle, setLatestAnalysisTitle] = useState<string | null>(null);
+  const [initialCapital, setInitialCapital] = useState<number>(1000);
+  const [editingCapital, setEditingCapital] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data: t }, { data: subs }, { data: analysis }] = await Promise.all([
+      const [{ data: t }, { data: subs }, { data: analysis }, { data: prof }] = await Promise.all([
         supabase
           .from("trades")
           .select("id, trade_at, pair, direction, result_usd, status")
@@ -46,10 +48,12 @@ const Dashboard = () => {
         isStudent || isAdmin
           ? supabase.from("weekly_analyses").select("title").order("week_start", { ascending: false }).limit(1)
           : Promise.resolve({ data: [] as any[] }),
+        supabase.from("profiles").select("initial_capital").eq("id", user.id).maybeSingle(),
       ]);
       if (t) setTrades(t as Trade[]);
       if (subs) setPendingExercises(subs.filter((s: any) => s.status !== "graded").length);
       if (analysis && analysis.length) setLatestAnalysisTitle(analysis[0].title);
+      if (prof?.initial_capital != null) setInitialCapital(Number(prof.initial_capital));
       setLoading(false);
     })();
   }, [user, isStudent, isAdmin]);
@@ -63,6 +67,8 @@ const Dashboard = () => {
   const totalGain = trades.filter((t) => (t.result_usd ?? 0) > 0).reduce((s, t) => s + (t.result_usd ?? 0), 0);
   const totalLoss = trades.filter((t) => (t.result_usd ?? 0) < 0).reduce((s, t) => s + (t.result_usd ?? 0), 0);
   const net = totalGain + totalLoss;
+  const currentCapital = initialCapital + net;
+  const capitalPct = initialCapital > 0 ? (net / initialCapital) * 100 : 0;
 
   // Mode student-first si étudiant ou admin (admin voit la version student riche par défaut)
   const studentMode = isStudent;
