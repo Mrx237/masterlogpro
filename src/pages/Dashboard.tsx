@@ -246,10 +246,23 @@ function StudentDashboard({
 /* ═══════════════════ SUBSCRIBER DASHBOARD ═══════════════════ */
 function SubscriberDashboard({
   loading, trades, net, winRate, totalGain, totalLoss, wins, losses,
-}: { loading: boolean; trades: Trade[]; net: number; winRate: number; totalGain: number; totalLoss: number; wins: number; losses: number }) {
+  initialCapital, currentCapital, capitalPct, onEditCapital,
+}: {
+  loading: boolean; trades: Trade[]; net: number; winRate: number;
+  totalGain: number; totalLoss: number; wins: number; losses: number;
+  initialCapital: number; currentCapital: number; capitalPct: number; onEditCapital: () => void;
+}) {
   const profitFactor = totalLoss !== 0 ? Math.abs(totalGain / totalLoss).toFixed(2) : "—";
   return (
     <>
+      <CapitalCard
+        tone="cyan"
+        initial={initialCapital}
+        current={currentCapital}
+        pct={capitalPct}
+        onEdit={onEditCapital}
+      />
+
       <div className="grid lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="lg:col-span-2 glass-strong relative overflow-hidden p-7">
           <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-primary/15 blur-3xl" />
