@@ -251,4 +251,7 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, hsl(210 40% 96% / 0.2), transparent);
   }
+
+  .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 }
