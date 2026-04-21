@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercise_submissions: {
+        Row: {
+          answer: string | null
+          coach_feedback: string | null
+          created_at: string
+          exercise_id: string
+          grade: number | null
+          graded_at: string | null
+          graded_by: string | null
+          id: string
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          coach_feedback?: string | null
+          created_at?: string
+          exercise_id: string
+          grade?: number | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["submission_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          coach_feedback?: string | null
+          created_at?: string
+          exercise_id?: string
+          grade?: number | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["submission_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_submissions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercises: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          instructions: string
+          is_published: boolean
+          level: Database["public"]["Enums"]["exercise_level"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          instructions: string
+          is_published?: boolean
+          level?: Database["public"]["Enums"]["exercise_level"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          instructions?: string
+          is_published?: boolean
+          level?: Database["public"]["Enums"]["exercise_level"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           admin_note: string | null
@@ -197,6 +283,45 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_analyses: {
+        Row: {
+          created_at: string
+          created_by: string
+          expected_direction: string | null
+          id: string
+          is_published: boolean
+          key_news: string | null
+          market_state: string | null
+          title: string
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expected_direction?: string | null
+          id?: string
+          is_published?: boolean
+          key_news?: string | null
+          market_state?: string | null
+          title: string
+          updated_at?: string
+          week_start?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expected_direction?: string | null
+          id?: string
+          is_published?: boolean
+          key_news?: string | null
+          market_state?: string | null
+          title?: string
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -215,11 +340,13 @@ export type Database = {
       account_status: "pending" | "active" | "expired"
       app_role: "admin" | "student" | "subscriber"
       error_tag: "bad_timing" | "overtrading" | "bad_analysis" | "none"
+      exercise_level: "debutant" | "intermediaire" | "avance"
       news_impact: "high" | "medium" | "low" | "none"
       offer_type: "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m"
       payment_method: "mtn" | "orange" | "airtel"
       payment_status: "pending" | "approved" | "rejected"
       sentiment: "bullish" | "bearish" | "neutral"
+      submission_status: "pending" | "submitted" | "graded"
       trade_direction: "buy" | "sell"
       trade_status: "win" | "loss" | "breakeven"
     }
@@ -352,11 +479,13 @@ export const Constants = {
       account_status: ["pending", "active", "expired"],
       app_role: ["admin", "student", "subscriber"],
       error_tag: ["bad_timing", "overtrading", "bad_analysis", "none"],
+      exercise_level: ["debutant", "intermediaire", "avance"],
       news_impact: ["high", "medium", "low", "none"],
       offer_type: ["formation", "sub_1m", "sub_3m", "sub_6m", "sub_12m"],
       payment_method: ["mtn", "orange", "airtel"],
       payment_status: ["pending", "approved", "rejected"],
       sentiment: ["bullish", "bearish", "neutral"],
+      submission_status: ["pending", "submitted", "graded"],
       trade_direction: ["buy", "sell"],
       trade_status: ["win", "loss", "breakeven"],
     },

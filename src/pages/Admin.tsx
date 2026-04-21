@@ -37,21 +37,31 @@ interface UserRow {
   win_rate: number;
 }
 
+import { ExercisesAdminTab, AnalysesAdminTab } from "@/components/admin/AdminTabs";
+
 const Admin = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <AppHeader />
-      <main className="container py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Administration</h1>
-        <p className="text-sm text-muted-foreground mb-6">Gestion des utilisateurs et validation des paiements.</p>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[400px] w-[800px] rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
+      <main className="container relative py-6 md:py-10">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-accent font-mono mb-2">
+          <Shield className="h-3.5 w-3.5" /> Console Admin
+        </div>
+        <h1 className="font-display text-3xl md:text-4xl font-bold">Cockpit administrateur</h1>
+        <p className="text-sm text-muted-foreground mt-1 mb-6">Utilisateurs, paiements, exercices, analyse hebdo.</p>
 
-        <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-            <TabsTrigger value="payments">Paiements</TabsTrigger>
+        <Tabs defaultValue="users" className="space-y-5">
+          <TabsList className="glass">
+            <TabsTrigger value="users">👥 Utilisateurs</TabsTrigger>
+            <TabsTrigger value="payments">💳 Paiements</TabsTrigger>
+            <TabsTrigger value="exercises">📚 Exercices</TabsTrigger>
+            <TabsTrigger value="analyses">📊 Analyses</TabsTrigger>
           </TabsList>
           <TabsContent value="users"><UsersTab /></TabsContent>
           <TabsContent value="payments"><PaymentsTab /></TabsContent>
+          <TabsContent value="exercises"><ExercisesAdminTab /></TabsContent>
+          <TabsContent value="analyses"><AnalysesAdminTab /></TabsContent>
         </Tabs>
       </main>
     </div>
