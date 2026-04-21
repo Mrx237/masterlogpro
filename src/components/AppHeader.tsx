@@ -7,7 +7,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isStudent } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -46,8 +46,10 @@ export function AppHeader() {
           {user && (
             <>
               <NavLink to="/dashboard" className={linkCls}>Dashboard</NavLink>
-              <NavLink to="/trades/new" className={linkCls}>Nouveau trade</NavLink>
-              <NavLink to="/subscribe" className={linkCls}>Offres</NavLink>
+              <NavLink to="/trades" className={linkCls}>Mes trades</NavLink>
+              {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls}>Exercices</NavLink>}
+              {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls}>Analyse</NavLink>}
+              {!isStudent && !isAdmin && <NavLink to="/subscribe" className={linkCls}>Offres</NavLink>}
               {isAdmin && (
                 <NavLink
                   to="/admin"
@@ -100,8 +102,10 @@ export function AppHeader() {
             {user ? (
               <>
                 <NavLink to="/dashboard" className={linkCls} onClick={() => setOpen(false)}>Dashboard</NavLink>
-                <NavLink to="/trades/new" className={linkCls} onClick={() => setOpen(false)}>Nouveau trade</NavLink>
-                <NavLink to="/subscribe" className={linkCls} onClick={() => setOpen(false)}>Offres</NavLink>
+                <NavLink to="/trades" className={linkCls} onClick={() => setOpen(false)}>Mes trades</NavLink>
+                {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls} onClick={() => setOpen(false)}>Exercices</NavLink>}
+                {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls} onClick={() => setOpen(false)}>Analyse</NavLink>}
+                {!isStudent && !isAdmin && <NavLink to="/subscribe" className={linkCls} onClick={() => setOpen(false)}>Offres</NavLink>}
                 {isAdmin && (
                   <NavLink to="/admin" className="px-3.5 py-2 text-[13px] font-medium text-accent" onClick={() => setOpen(false)}>
                     Admin

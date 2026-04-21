@@ -10,6 +10,9 @@ import Subscribe from "./pages/Subscribe.tsx";
 import Payment from "./pages/Payment.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import NewTrade from "./pages/NewTrade.tsx";
+import Trades from "./pages/Trades.tsx";
+import Exercises from "./pages/Exercises.tsx";
+import Analyse from "./pages/Analyse.tsx";
 import Admin from "./pages/Admin.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
@@ -27,7 +30,10 @@ const App = () => (
           <Route path="/subscribe" element={<Subscribe />} />
           <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/trades" element={<ProtectedRoute requireJournal><Trades /></ProtectedRoute>} />
           <Route path="/trades/new" element={<ProtectedRoute requireJournal><NewTrade /></ProtectedRoute>} />
+          <Route path="/exercises" element={<ProtectedRoute><Exercises /></ProtectedRoute>} />
+          <Route path="/analyse" element={<ProtectedRoute><Analyse /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
