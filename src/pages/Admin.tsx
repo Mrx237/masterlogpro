@@ -41,27 +41,31 @@ import { ExercisesAdminTab, AnalysesAdminTab } from "@/components/admin/AdminTab
 
 const Admin = () => {
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
       <AppHeader />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[400px] w-[800px] rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
-      <main className="container relative py-6 md:py-10">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-accent font-mono mb-2">
-          <Shield className="h-3.5 w-3.5" /> Console Admin
-        </div>
-        <h1 className="font-display text-3xl md:text-4xl font-bold">Cockpit administrateur</h1>
-        <p className="text-sm text-muted-foreground mt-1 mb-6">Utilisateurs, paiements, exercices, analyse hebdo.</p>
+      <main className="container relative py-4 md:py-8 max-w-7xl">
+        <Tabs defaultValue="users" className="space-y-4">
+          {/* Sticky top bar — titre + tabs alignés en haut, pas de débordement */}
+          <div className="sticky top-[64px] z-20 -mx-4 px-4 md:-mx-6 md:px-6 py-3 backdrop-blur-xl bg-background/85 border-b border-border/50">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-accent font-mono mb-1.5">
+              <Shield className="h-3 w-3" /> Console Admin
+            </div>
+            <h1 className="font-display text-xl md:text-2xl font-bold leading-tight">Cockpit administrateur</h1>
+            <div className="mt-3 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto scrollbar-none">
+              <TabsList className="glass inline-flex w-auto min-w-max">
+                <TabsTrigger value="users" className="text-xs md:text-sm whitespace-nowrap">👥 Utilisateurs</TabsTrigger>
+                <TabsTrigger value="payments" className="text-xs md:text-sm whitespace-nowrap">💳 Paiements</TabsTrigger>
+                <TabsTrigger value="exercises" className="text-xs md:text-sm whitespace-nowrap">📚 Exercices</TabsTrigger>
+                <TabsTrigger value="analyses" className="text-xs md:text-sm whitespace-nowrap">📊 Analyses</TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
 
-        <Tabs defaultValue="users" className="space-y-5">
-          <TabsList className="glass">
-            <TabsTrigger value="users">👥 Utilisateurs</TabsTrigger>
-            <TabsTrigger value="payments">💳 Paiements</TabsTrigger>
-            <TabsTrigger value="exercises">📚 Exercices</TabsTrigger>
-            <TabsTrigger value="analyses">📊 Analyses</TabsTrigger>
-          </TabsList>
-          <TabsContent value="users"><UsersTab /></TabsContent>
-          <TabsContent value="payments"><PaymentsTab /></TabsContent>
-          <TabsContent value="exercises"><ExercisesAdminTab /></TabsContent>
-          <TabsContent value="analyses"><AnalysesAdminTab /></TabsContent>
+          <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
+          <TabsContent value="payments" className="mt-4"><PaymentsTab /></TabsContent>
+          <TabsContent value="exercises" className="mt-4"><ExercisesAdminTab /></TabsContent>
+          <TabsContent value="analyses" className="mt-4"><AnalysesAdminTab /></TabsContent>
         </Tabs>
       </main>
     </div>
