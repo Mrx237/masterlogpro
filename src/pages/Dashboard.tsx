@@ -155,12 +155,23 @@ const Dashboard = () => {
 /* ═══════════════════ STUDENT DASHBOARD ═══════════════════ */
 function StudentDashboard({
   loading, trades, net, winRate, totalGain, totalLoss, pendingExercises, latestAnalysisTitle,
+  initialCapital, currentCapital, capitalPct, onEditCapital,
 }: {
   loading: boolean; trades: Trade[]; net: number; winRate: number;
   totalGain: number; totalLoss: number; pendingExercises: number; latestAnalysisTitle: string | null;
+  initialCapital: number; currentCapital: number; capitalPct: number; onEditCapital: () => void;
 }) {
   return (
     <>
+      {/* CAPITAL — bloc principal en haut */}
+      <CapitalCard
+        tone="gold"
+        initial={initialCapital}
+        current={currentCapital}
+        pct={capitalPct}
+        onEdit={onEditCapital}
+      />
+
       {/* HERO STAT — net result GROS */}
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1 glass-strong relative overflow-hidden p-7">
