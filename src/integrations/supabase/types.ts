@@ -157,6 +157,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          initial_capital: number | null
           last_seen_at: string | null
           status: Database["public"]["Enums"]["account_status"]
           subscription_ends_at: string | null
@@ -167,6 +168,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          initial_capital?: number | null
           last_seen_at?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           subscription_ends_at?: string | null
@@ -177,6 +179,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          initial_capital?: number | null
           last_seen_at?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           subscription_ends_at?: string | null
