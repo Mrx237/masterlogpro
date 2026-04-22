@@ -328,3 +328,157 @@ export function AnalysesAdminTab() {
     </div>
   );
 }
+
+/* ===================== NEWS ADMIN ===================== */
+
+interface NewsRow { id: string; title: string; currency: string; event_at: string; impact: "high"|"medium"|"low"; sentiment: "bullish"|"bearish"|"neutral"; admin_analysis: string | null; source: string | null; summary: string | null; }
+
+export function NewsAdminTab() {
+  const { user } = useAuth();
+  const [rows, setRows] = useState<NewsRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<NewsRow | null>(null);
+
+  async function load() {
+    setLoading(true);
+    const { data } = await supabase.from("economic_news")
+      .select("id,title,currency,event_at,impact,sentiment,admin_analysis,source,summary")
+      .order("event_at", { ascending: false }).limit(200);
+    setRows((data ?? []) as NewsRow[]);
+    setLoading(false);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function syncFinnhub() {
+    setSyncing(true);
+    const { data, error } = await supabase.functions.invoke("fetch-news");
+    setSyncing(false);
+    if (error) return toast.error(error.message);
+    if ((data as any)?.error) return toast.error((data as any).error);
+    toast.success(`Sync OK : ${(data as any)?.upserted ?? 0} évènements importés`);
+    load();
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Supprimer cette news ?")) return;
+    const { error } = await supabase.from("economic_news").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Supprimé"); load();
+  }
+
+  return (
+    <Card className="glass overflow-hidden">
+      <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div className="font-semibold flex items-center gap-2">📰 {rows.length} news</div>
+          <div className="text-xs text-muted-foreground">Calendrier économique visible par tous les utilisateurs connectés.</div>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={syncFinnhub} disabled={syncing} variant="outline" className="border-primary/30 text-primary">
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : "🔄"} Sync Finnhub
+          </Button>
+          <Button onClick={() => setCreating(true)} className="bg-gradient-brand text-primary-foreground border-0 font-semibold">
+            <Plus className="h-4 w-4" /> News manuelle
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="p-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+      ) : rows.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">Aucune news. Sync ou crée la première.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border/50">
+              <tr><th className="text-left p-3">Titre</th><th className="p-3">Devise</th><th className="p-3">Impact</th><th className="p-3">Sent.</th><th className="p-3">Date</th><th className="p-3">Source</th><th className="p-3"></th></tr>
+            </thead>
+            <tbody>
+              {rows.map(n => (
+                <tr key={n.id} className="border-b border-border/30 hover:bg-card/40">
+                  <td className="p-3 max-w-xs truncate font-medium">{n.title}</td>
+                  <td className="p-3 text-center font-mono text-xs">{n.currency}</td>
+                  <td className="p-3 text-center"><Badge variant="outline" className="text-[10px]">{n.impact}</Badge></td>
+                  <td className="p-3 text-center text-xs">{n.sentiment}</td>
+                  <td className="p-3 text-xs text-muted-foreground font-mono whitespace-nowrap">{new Date(n.event_at).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</td>
+                  <td className="p-3 text-center text-[10px] text-muted-foreground">{n.source}</td>
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(n)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => remove(n.id)} className="text-rose-400 hover:text-rose-300">✕</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {(creating || editing) && (
+        <NewsDialog news={editing} onClose={() => { setCreating(false); setEditing(null); }} onSaved={() => { setCreating(false); setEditing(null); load(); }} userId={user?.id} />
+      )}
+    </Card>
+  );
+}
+
+function NewsDialog({ news, onClose, onSaved, userId }: { news: NewsRow | null; onClose: () => void; onSaved: () => void; userId?: string }) {
+  const [title, setTitle] = useState(news?.title ?? "");
+  const [currency, setCurrency] = useState(news?.currency ?? "USD");
+  const [summary, setSummary] = useState(news?.summary ?? "");
+  const [impact, setImpact] = useState<"high"|"medium"|"low">(news?.impact ?? "medium");
+  const [sentiment, setSentiment] = useState<"bullish"|"bearish"|"neutral">(news?.sentiment ?? "neutral");
+  const [adminAnalysis, setAdminAnalysis] = useState(news?.admin_analysis ?? "");
+  const [eventAt, setEventAt] = useState(news?.event_at ? new Date(news.event_at).toISOString().slice(0,16) : new Date().toISOString().slice(0,16));
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!title.trim()) return toast.error("Titre requis");
+    setSaving(true);
+    const payload: any = { title, currency, summary, impact, sentiment, admin_analysis: adminAnalysis || null, event_at: new Date(eventAt).toISOString(), source: news?.source ?? "manual", created_by: userId };
+    const { error } = news
+      ? await supabase.from("economic_news").update(payload).eq("id", news.id)
+      : await supabase.from("economic_news").insert(payload);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(news ? "Mis à jour" : "Créé");
+    onSaved();
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="glass-strong max-w-lg">
+        <DialogHeader><DialogTitle>{news ? "Modifier" : "Nouvelle"} news</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label className="text-xs">Titre</Label><Input value={title} onChange={(e)=>setTitle(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Devise</Label><Input value={currency} onChange={(e)=>setCurrency(e.target.value.toUpperCase())} maxLength={6} /></div>
+            <div><Label className="text-xs">Date / Heure</Label><Input type="datetime-local" value={eventAt} onChange={(e)=>setEventAt(e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Impact</Label>
+              <Select value={impact} onValueChange={(v)=>setImpact(v as any)}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent><SelectItem value="high">Fort</SelectItem><SelectItem value="medium">Moyen</SelectItem><SelectItem value="low">Faible</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div><Label className="text-xs">Sentiment</Label>
+              <Select value={sentiment} onValueChange={(v)=>setSentiment(v as any)}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent><SelectItem value="bullish">Haussier</SelectItem><SelectItem value="bearish">Baissier</SelectItem><SelectItem value="neutral">Neutre</SelectItem></SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div><Label className="text-xs">Résumé</Label><Textarea value={summary} onChange={(e)=>setSummary(e.target.value)} rows={2} /></div>
+          <div><Label className="text-xs">Analyse coach (optionnel)</Label><Textarea value={adminAnalysis} onChange={(e)=>setAdminAnalysis(e.target.value)} rows={3} placeholder="Affichée sous l'analyse automatique"/></div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button onClick={save} disabled={saving} className="bg-gradient-brand text-primary-foreground border-0 font-semibold">
+            {saving && <Loader2 className="h-4 w-4 animate-spin"/>} Enregistrer
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
