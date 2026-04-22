@@ -156,6 +156,11 @@ const Auth = () => {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <FieldGroup id="li-email" label="Email" name="email" type="email" required />
                   <FieldGroup id="li-pw" label="Mot de passe" name="password" type="password" required />
+                  <div className="flex justify-end -mt-2">
+                    <Link to="/forgot-password" className="text-[11px] text-primary hover:text-primary/80 font-medium">
+                      Mot de passe oublié ?
+                    </Link>
+                  </div>
                   <Button type="submit" className="w-full h-11 bg-gradient-brand text-primary-foreground border-0 font-semibold glow-cyan" disabled={loading}>
                     {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                     Se connecter →
