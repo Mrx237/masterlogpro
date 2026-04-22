@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      economic_news: {
+        Row: {
+          actual: string | null
+          admin_analysis: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          event_at: string
+          external_id: string | null
+          forecast: string | null
+          id: string
+          impact: Database["public"]["Enums"]["news_impact_level"]
+          previous: string | null
+          sentiment: Database["public"]["Enums"]["news_sentiment"]
+          source: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual?: string | null
+          admin_analysis?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          event_at?: string
+          external_id?: string | null
+          forecast?: string | null
+          id?: string
+          impact?: Database["public"]["Enums"]["news_impact_level"]
+          previous?: string | null
+          sentiment?: Database["public"]["Enums"]["news_sentiment"]
+          source?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual?: string | null
+          admin_analysis?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          event_at?: string
+          external_id?: string | null
+          forecast?: string | null
+          id?: string
+          impact?: Database["public"]["Enums"]["news_impact_level"]
+          previous?: string | null
+          sentiment?: Database["public"]["Enums"]["news_sentiment"]
+          source?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exercise_submissions: {
         Row: {
           answer: string | null
@@ -345,6 +405,8 @@ export type Database = {
       error_tag: "bad_timing" | "overtrading" | "bad_analysis" | "none"
       exercise_level: "debutant" | "intermediaire" | "avance"
       news_impact: "high" | "medium" | "low" | "none"
+      news_impact_level: "high" | "medium" | "low"
+      news_sentiment: "bullish" | "bearish" | "neutral"
       offer_type: "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m"
       payment_method: "mtn" | "orange" | "airtel"
       payment_status: "pending" | "approved" | "rejected"
@@ -484,6 +546,8 @@ export const Constants = {
       error_tag: ["bad_timing", "overtrading", "bad_analysis", "none"],
       exercise_level: ["debutant", "intermediaire", "avance"],
       news_impact: ["high", "medium", "low", "none"],
+      news_impact_level: ["high", "medium", "low"],
+      news_sentiment: ["bullish", "bearish", "neutral"],
       offer_type: ["formation", "sub_1m", "sub_3m", "sub_6m", "sub_12m"],
       payment_method: ["mtn", "orange", "airtel"],
       payment_status: ["pending", "approved", "rejected"],
