@@ -1,5 +1,5 @@
-// Simple deterministic "bot" that turns impact + sentiment + currency
-// into a pedagogical analysis. No AI calls.
+// Bot d'analyse fondamentale "expert" — déterministe, pédagogique.
+// Génère : zone, interprétation, impact marché, conclusion + paires.
 
 export type Impact = "high" | "medium" | "low";
 export type Sentiment = "bullish" | "bearish" | "neutral";
@@ -15,6 +15,18 @@ const PAIRS: Record<string, { up: string[]; down: string[] }> = {
   NZD: { up: ["NZD/USD ↑"], down: ["NZD/USD ↓"] },
 };
 
+const ZONE: Record<string, { flag: string; name: string }> = {
+  USD: { flag: "🇺🇸", name: "États-Unis" },
+  EUR: { flag: "🇪🇺", name: "Zone Euro" },
+  GBP: { flag: "🇬🇧", name: "Royaume-Uni" },
+  JPY: { flag: "🇯🇵", name: "Japon" },
+  CHF: { flag: "🇨🇭", name: "Suisse" },
+  CAD: { flag: "🇨🇦", name: "Canada" },
+  AUD: { flag: "🇦🇺", name: "Australie" },
+  NZD: { flag: "🇳🇿", name: "Nouvelle-Zélande" },
+  CNY: { flag: "🇨🇳", name: "Chine" },
+};
+
 export function impactLabel(i: Impact) {
   return i === "high" ? "Fort" : i === "medium" ? "Moyen" : "Faible";
 }
@@ -22,35 +34,60 @@ export function sentimentLabel(s: Sentiment) {
   return s === "bullish" ? "Haussier" : s === "bearish" ? "Baissier" : "Neutre";
 }
 
+export type ExpertAnalysis = {
+  zone: { flag: string; name: string; currency: string };
+  interpretation: string;     // Ce que ça veut dire pour la devise
+  marketImpact: string;       // Ce que le marché peut faire
+  conclusion: {
+    icon: "buy" | "sell" | "wait";
+    label: string;            // "Opportunité d'achat" / etc.
+    bias: string;              // "biais haussier sur USD"
+  };
+  pairs: string[];
+  warning: string;            // Note prudence (selon impact)
+};
+
 export function generateAnalysis(opts: {
   title: string; currency: string; impact: Impact; sentiment: Sentiment;
-}): { meaning: string; market: string; direction: string; pairs: string[] } {
-  const { title, currency, impact, sentiment } = opts;
+}): ExpertAnalysis {
+  const { currency, impact, sentiment } = opts;
   const ccy = currency.toUpperCase();
+  const zone = ZONE[ccy] ?? { flag: "🌍", name: "International" };
 
-  const sevText = impact === "high"
-    ? "Cet événement a un **impact fort** : volatilité importante attendue, prudence sur les positions ouvertes."
-    : impact === "medium"
-      ? "Cet événement a un **impact moyen** : mouvements possibles, surtout si le résultat surprend."
-      : "Cet événement a un **impact faible** : peu d'effet attendu sur le marché.";
-
-  let meaning = "";
-  let direction = "";
+  let interpretation = "";
+  let marketImpact = "";
+  let conclusion: ExpertAnalysis["conclusion"];
   let pairs: string[] = [];
 
   if (sentiment === "bullish") {
-    meaning = `« ${title} » est une nouvelle **positive pour ${ccy}**. Cela renforce la confiance dans cette devise.`;
-    direction = `→ ${ccy} peut **monter**.`;
+    interpretation = `Cette donnée est **positive pour le ${ccy}**. Elle renforce la confiance des investisseurs dans cette devise.`;
+    marketImpact = `Le **${ccy} peut monter** face aux autres devises.`;
     pairs = PAIRS[ccy]?.up ?? [];
+    conclusion = { icon: "buy", label: "Opportunité d'achat sur " + ccy, bias: `Biais **haussier** sur ${ccy}` };
   } else if (sentiment === "bearish") {
-    meaning = `« ${title} » est une nouvelle **négative pour ${ccy}**. Cela affaiblit la devise.`;
-    direction = `→ ${ccy} peut **baisser**.`;
+    interpretation = `Cette donnée est **négative pour le ${ccy}**. Elle affaiblit la confiance des investisseurs.`;
+    marketImpact = `Le **${ccy} peut baisser** face aux autres devises.`;
     pairs = PAIRS[ccy]?.down ?? [];
+    conclusion = { icon: "sell", label: "Opportunité de vente sur " + ccy, bias: `Biais **baissier** sur ${ccy}` };
   } else {
-    meaning = `« ${title} » est une nouvelle **neutre pour ${ccy}** : impact limité tant qu'aucune surprise n'apparaît dans les chiffres.`;
-    direction = `→ ${ccy} : direction **incertaine**.`;
+    interpretation = `Cette donnée est **neutre pour le ${ccy}** : elle est conforme aux attentes du marché.`;
+    marketImpact = `Peu d'effet attendu sur le ${ccy} sauf surprise dans les chiffres.`;
     pairs = [];
+    conclusion = { icon: "wait", label: "Attendre la confirmation", bias: `Direction **incertaine** sur ${ccy}` };
   }
 
-  return { meaning: `${meaning}\n\n${sevText}`, market: `Marché : surveille les paires liées à ${ccy} dans l'heure qui suit la publication.`, direction, pairs };
+  const warning = impact === "high"
+    ? "⚠️ **Impact fort** : forte volatilité attendue. Évite d'ouvrir une position juste avant la publication."
+    : impact === "medium"
+      ? "ℹ️ **Impact moyen** : des mouvements sont possibles, surtout en cas de surprise."
+      : "✅ **Impact faible** : peu d'effet sur le marché.";
+
+  return {
+    zone: { ...zone, currency: ccy },
+    interpretation,
+    marketImpact,
+    conclusion,
+    pairs,
+    warning,
+  };
 }
