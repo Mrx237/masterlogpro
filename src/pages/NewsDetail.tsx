@@ -89,26 +89,65 @@ export default function NewsDetail() {
           </Card>
         )}
 
-        {/* Bot d'analyse */}
+        {/* Bot d'analyse expert */}
         <Card className="glass-strong p-5 md:p-6 border border-primary/30 shadow-[0_0_40px_-20px_hsl(var(--primary))]">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-brand">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-brand">
               <Brain className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-display font-bold text-lg">Analyse simplifiée</div>
+              <div className="font-display font-bold text-lg">📊 Analyse fondamentale</div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-mono inline-flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> Bot pédagogique
+                <Sparkles className="h-3 w-3" /> Bot expert
               </div>
             </div>
           </div>
 
-          <div className="space-y-4 text-sm md:text-[15px] leading-relaxed">
-            <p className="whitespace-pre-line" dangerouslySetInnerHTML={{ __html: a.meaning.replace(/\*\*(.+?)\*\*/g, "<strong class='text-foreground'>$1</strong>") }} />
-            <div className="rounded-lg border border-border/60 bg-background/40 p-3">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">📊 Direction probable</div>
-              <div className="font-display text-base font-semibold" dangerouslySetInnerHTML={{ __html: a.direction.replace(/\*\*(.+?)\*\*/g, "<span class='text-primary'>$1</span>") }} />
+          <div className="space-y-3 text-sm md:text-[15px] leading-relaxed">
+            {/* Zone */}
+            <div className="rounded-lg border border-border/60 bg-background/40 p-3 flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-primary shrink-0" />
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Zone concernée</div>
+                <div className="font-display font-semibold">{a.zone.flag} {a.zone.name} <span className="text-muted-foreground font-normal">({a.zone.currency})</span></div>
+              </div>
             </div>
+
+            {/* Interprétation */}
+            <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                <Lightbulb className="h-3 w-3" /> Interprétation
+              </div>
+              <p dangerouslySetInnerHTML={{ __html: renderBold(a.interpretation) }} />
+            </div>
+
+            {/* Impact marché */}
+            <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                <Activity className="h-3 w-3" /> Impact marché
+              </div>
+              <p dangerouslySetInnerHTML={{ __html: renderBold(a.marketImpact) }} />
+            </div>
+
+            {/* Conclusion */}
+            <div className={`rounded-lg p-4 border ${
+              a.conclusion.icon === "buy" ? "border-emerald-500/40 bg-emerald-500/10"
+              : a.conclusion.icon === "sell" ? "border-rose-500/40 bg-rose-500/10"
+              : "border-amber-400/40 bg-amber-400/10"
+            }`}>
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                <Target className="h-3 w-3" /> 🎯 Conclusion
+              </div>
+              <div className="flex items-center gap-2 font-display font-bold text-base">
+                {a.conclusion.icon === "buy" && <ArrowUpCircle className="h-5 w-5 text-emerald-400" />}
+                {a.conclusion.icon === "sell" && <ArrowDownCircle className="h-5 w-5 text-rose-400" />}
+                {a.conclusion.icon === "wait" && <PauseCircle className="h-5 w-5 text-amber-400" />}
+                <span>{a.conclusion.icon === "buy" ? "📈" : a.conclusion.icon === "sell" ? "📉" : "⚖️"} {a.conclusion.label}</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1" dangerouslySetInnerHTML={{ __html: renderBold(a.conclusion.bias) }} />
+            </div>
+
+            {/* Paires */}
             {a.pairs.length > 0 && (
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Paires à surveiller</div>
@@ -119,7 +158,9 @@ export default function NewsDetail() {
                 </div>
               </div>
             )}
-            <p className="text-xs text-muted-foreground italic">{a.market}</p>
+
+            {/* Avertissement */}
+            <p className="text-xs text-muted-foreground italic" dangerouslySetInnerHTML={{ __html: renderBold(a.warning) }} />
           </div>
 
           {n.admin_analysis && (
