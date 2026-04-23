@@ -5,8 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowLeft, Brain, TrendingUp, TrendingDown, Minus, Sparkles } from "lucide-react";
+import { Loader2, ArrowLeft, Brain, TrendingUp, TrendingDown, Minus, Sparkles, MapPin, Lightbulb, Activity, Target, ArrowUpCircle, ArrowDownCircle, PauseCircle } from "lucide-react";
 import { generateAnalysis, impactLabel, sentimentLabel, type Impact, type Sentiment } from "@/lib/newsBot";
+
+function renderBold(s: string) {
+  return s.replace(/\*\*(.+?)\*\*/g, "<strong class='text-foreground'>$1</strong>");
+}
 
 interface NewsRow {
   id: string;
