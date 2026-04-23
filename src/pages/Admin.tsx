@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { OFFERS, OfferKey, formatFCFA } from "@/lib/constants";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, Shield, ShieldOff, UserCheck, UserX, TrendingUp, TrendingDown } from "lucide-react";
+import { Loader2, ExternalLink, Shield, ShieldOff, UserCheck, UserX, TrendingUp, TrendingDown, UserPlus, Copy } from "lucide-react";
 
 type AppRole = "admin" | "student" | "subscriber";
 type AccountStatus = "pending" | "active" | "expired";
@@ -81,6 +81,7 @@ function UsersTab() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [active, setActive] = useState<UserRow | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -143,8 +144,13 @@ function UsersTab() {
           <div className="font-semibold">{users.length} utilisateur{users.length > 1 ? "s" : ""}</div>
           <div className="text-xs text-muted-foreground">Stats agrégées sur tous les trades</div>
         </div>
-        <Input placeholder="Rechercher email ou nom..." value={search} onChange={(e) => setSearch(e.target.value)} className="md:w-72" />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input placeholder="Rechercher email ou nom..." value={search} onChange={(e) => setSearch(e.target.value)} className="md:w-72" />
+          <Button onClick={() => setInviteOpen(true)} className="gap-2"><UserPlus className="h-4 w-4" /> Inviter un membre</Button>
+        </div>
       </div>
+
+      <InviteUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} onInvited={load} />
 
       {loading ? (
         <div className="p-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
