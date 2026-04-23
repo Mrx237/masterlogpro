@@ -44,6 +44,8 @@ export default function News() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Impact>("all");
   const [q, setQ] = useState("");
+  const [dateMode, setDateMode] = useState<"all" | "today" | "week" | "custom">("all");
+  const [customDate, setCustomDate] = useState<Date | undefined>();
 
   useEffect(() => {
     (async () => {
@@ -58,11 +60,33 @@ export default function News() {
     })();
   }, []);
 
-  const filtered = rows.filter((r) => {
+  const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== "all" && r.impact !== filter) return false;
     if (q && !`${r.title} ${r.currency}`.toLowerCase().includes(q.toLowerCase())) return false;
+
+    if (dateMode !== "all") {
+      const d = new Date(r.event_at);
+      const now = new Date();
+      if (dateMode === "today") {
+        if (d.toDateString() !== now.toDateString()) return false;
+      } else if (dateMode === "week") {
+        const start = new Date(now); start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0);
+        const end = new Date(start); end.setDate(start.getDate() + 7);
+        if (d < start || d >= end) return false;
+      } else if (dateMode === "custom" && customDate) {
+        if (d.toDateString() !== customDate.toDateString()) return false;
+      }
+    }
     return true;
-  });
+  }), [rows, filter, q, dateMode, customDate]);
+
+  const dateBtn = (mode: typeof dateMode, icon: React.ReactNode, label: string) => (
+    <Button size="sm" variant={dateMode === mode ? "default" : "outline"}
+      onClick={() => { setDateMode(mode); if (mode !== "custom") setCustomDate(undefined); }}
+      className={cn("gap-1.5", dateMode === mode && "bg-gradient-brand text-primary-foreground border-0")}>
+      {icon}{label}
+    </Button>
+  );
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
@@ -77,7 +101,33 @@ export default function News() {
           📊 Les meilleurs traders sont ceux qui analysent les news avant de trader.
         </p>
 
-        <Card className="glass p-3 md:p-4 mb-5">
+        <Card className="glass p-3 md:p-4 mb-5 space-y-3">
+          {/* Filtres rapides date */}
+          <div className="flex flex-wrap gap-1.5">
+            {dateBtn("all", <CalendarRange className="h-3.5 w-3.5" />, "Toutes")}
+            {dateBtn("today", <CalendarCheck className="h-3.5 w-3.5" />, "Aujourd'hui")}
+            {dateBtn("week", <CalendarRange className="h-3.5 w-3.5" />, "Cette semaine")}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="sm" variant={dateMode === "custom" ? "default" : "outline"}
+                  className={cn("gap-1.5", dateMode === "custom" && "bg-gradient-brand text-primary-foreground border-0")}>
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {customDate ? format(customDate, "d MMM", { locale: fr }) : "Choisir"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customDate}
+                  onSelect={(d) => { setCustomDate(d); if (d) setDateMode("custom"); }}
+                  initialFocus className="p-3 pointer-events-auto" locale={fr} />
+              </PopoverContent>
+            </Popover>
+            {dateMode !== "all" && (
+              <Button size="sm" variant="ghost" onClick={() => { setDateMode("all"); setCustomDate(undefined); }} className="gap-1 text-muted-foreground">
+                <X className="h-3 w-3" /> Réinitialiser
+              </Button>
+            )}
+          </div>
+
           <div className="flex flex-col md:flex-row gap-3 md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -99,7 +149,7 @@ export default function News() {
           <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
           <Card className="glass p-10 text-center text-sm text-muted-foreground">
-            Aucune news pour l'instant. L'admin peut synchroniser le calendrier économique depuis la console.
+            Aucune news pour cette sélection.
           </Card>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
