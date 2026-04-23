@@ -377,6 +377,138 @@ function RoleBadge({ r }: { r: AppRole }) {
   );
 }
 
+/* ================== INVITE USER DIALOG ================== */
+
+function InviteUserDialog({ open, onClose, onInvited }: { open: boolean; onClose: () => void; onInvited: () => void }) {
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [offer, setOffer] = useState<OfferKey>("sub_1m");
+  const [role, setRole] = useState<AppRole>("subscriber");
+  const [customDays, setCustomDays] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ email: string; temp_password: string | null; is_new: boolean; expires_at: string | null } | null>(null);
+
+  function reset() {
+    setEmail(""); setFullName(""); setOffer("sub_1m"); setRole("subscriber"); setCustomDays(""); setResult(null);
+  }
+
+  async function submit() {
+    if (!email.trim()) return toast.error("Email requis");
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("admin-invite-user", {
+      body: {
+        email: email.trim(),
+        full_name: fullName.trim(),
+        offer,
+        role,
+        custom_days: customDays ? Number(customDays) : null,
+      },
+    });
+    setBusy(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Erreur");
+      return;
+    }
+    setResult(data as any);
+    toast.success((data as any).is_new ? "Compte créé et activé ✅" : "Compte existant activé ✅");
+    onInvited();
+  }
+
+  function close() {
+    reset();
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && close()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><UserPlus className="h-5 w-5 text-accent" /> Inviter un membre</DialogTitle>
+          <DialogDescription>
+            Crée un compte ou active un compte existant sans paiement. L'utilisateur reçoit un accès immédiat.
+          </DialogDescription>
+        </DialogHeader>
+
+        {!result ? (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-email">Email *</Label>
+              <Input id="inv-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="membre@example.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-name">Nom complet (optionnel)</Label>
+              <Input id="inv-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jean Dupont" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Offre / accès</Label>
+                <Select value={offer} onValueChange={(v) => setOffer(v as OfferKey)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(OFFERS) as OfferKey[]).map((k) => (
+                      <SelectItem key={k} value={k}>{OFFERS[k].label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Rôle</Label>
+                <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="subscriber">💳 Abonné</SelectItem>
+                    <SelectItem value="student">🎓 Étudiant</SelectItem>
+                    <SelectItem value="admin">🛡️ Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-days">Durée personnalisée en jours (optionnel)</Label>
+              <Input id="inv-days" type="number" min={1} value={customDays} onChange={(e) => setCustomDays(e.target.value)} placeholder="Vide = durée de l'offre" />
+              <p className="text-xs text-muted-foreground">Laisse vide pour utiliser la durée par défaut de l'offre. La formation est illimitée.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-md border border-gain/40 bg-gain/10 p-4 space-y-2">
+              <div className="font-semibold text-gain flex items-center gap-2">✅ {result.is_new ? "Compte créé" : "Compte activé"}</div>
+              <Row k="Email" v={result.email} />
+              {result.expires_at && <Row k="Expire le" v={new Date(result.expires_at).toLocaleDateString("fr-FR")} />}
+            </div>
+            {result.temp_password && (
+              <div className="rounded-md border border-accent/40 bg-accent/10 p-4 space-y-2">
+                <div className="text-xs uppercase tracking-wide text-accent font-mono">Mot de passe temporaire</div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 font-mono text-sm bg-background px-3 py-2 rounded border break-all">{result.temp_password}</code>
+                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(result.temp_password!); toast.success("Copié"); }}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">⚠️ Communique ce mot de passe au membre via WhatsApp ou email. Il pourra le changer dans son profil.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          {!result ? (
+            <>
+              <Button variant="outline" onClick={close} disabled={busy}>Annuler</Button>
+              <Button onClick={submit} disabled={busy}>
+                {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Créer et activer
+              </Button>
+            </>
+          ) : (
+            <Button onClick={close}>Fermer</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ================== PAYMENTS TAB (existing logic) ================== */
 
 function PaymentsTab() {
