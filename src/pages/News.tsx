@@ -121,10 +121,18 @@ export default function News() {
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary font-mono mb-2">
           <Newspaper className="h-3 w-3" /> Actualités
         </div>
-        <h1 className="font-display text-2xl md:text-4xl font-bold mb-2">News économiques</h1>
-        <p className="text-muted-foreground text-sm md:text-base mb-6">
-          📊 Les meilleurs traders sont ceux qui analysent les news avant de trader.
-        </p>
+        <div className="flex items-start justify-between gap-3 mb-6">
+          <div>
+            <h1 className="font-display text-2xl md:text-4xl font-bold mb-2">News économiques</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
+              📊 Les meilleurs traders sont ceux qui analysent les news avant de trader.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={refresh} disabled={refreshing} className="gap-2 shrink-0">
+            <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+            <span className="hidden sm:inline">Actualiser</span>
+          </Button>
+        </div>
 
         <Card className="glass p-3 md:p-4 mb-5 space-y-3">
           {/* Filtres rapides date */}
