@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Newspaper, TrendingUp, TrendingDown, Minus, ArrowRight, Search, CalendarDays, CalendarRange, CalendarCheck, X } from "lucide-react";
+import { Loader2, Newspaper, TrendingUp, TrendingDown, Minus, ArrowRight, Search, CalendarDays, CalendarRange, CalendarCheck, X, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -46,19 +47,43 @@ export default function News() {
   const [q, setQ] = useState("");
   const [dateMode, setDateMode] = useState<"all" | "today" | "week" | "custom">("all");
   const [customDate, setCustomDate] = useState<Date | undefined>();
+  const [refreshing, setRefreshing] = useState(false);
 
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("economic_news")
+      .select("id,title,currency,country,event_at,summary,impact,sentiment")
+      .order("event_at", { ascending: false })
+      .limit(500);
+    setRows((data ?? []) as NewsRow[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-news");
+      if (error) throw error;
+      toast.success(`${data?.upserted ?? 0} news synchronisées`);
+      await load();
+    } catch (e: any) {
+      toast.error("Échec de la synchro : " + (e?.message ?? "inconnu"));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Auto-refresh quand l'utilisateur ouvre la page si la news la plus récente date de plus d'1h
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from("economic_news")
-        .select("id,title,currency,country,event_at,summary,impact,sentiment")
-        .order("event_at", { ascending: false })
-        .limit(200);
-      setRows((data ?? []) as NewsRow[]);
-      setLoading(false);
-    })();
-  }, []);
+    if (loading || refreshing || rows.length === 0) return;
+    const latest = new Date(rows[0].event_at).getTime();
+    const oldestThreshold = Date.now() - 60 * 60 * 1000;
+    if (latest < oldestThreshold) refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== "all" && r.impact !== filter) return false;
