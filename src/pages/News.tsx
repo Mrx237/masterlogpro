@@ -1,12 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Newspaper, TrendingUp, TrendingDown, Minus, ArrowRight, Search } from "lucide-react";
+import { Loader2, Newspaper, TrendingUp, TrendingDown, Minus, ArrowRight, Search, CalendarDays, CalendarRange, CalendarCheck, X } from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { impactLabel, sentimentLabel, type Impact, type Sentiment } from "@/lib/newsBot";
 
 interface NewsRow {
