@@ -51,12 +51,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const parseDateInput = (value: unknown) => {
+      if (typeof value !== "string") return null;
+      const normalized = value.trim().slice(0, 10);
+      return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : null;
+    };
+
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    // Fenêtre élargie : 7 jours dans le passé, 30 jours dans le futur
     const now = new Date();
-    const from = new Date(now.getTime() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
-    const to = new Date(now.getTime() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const fallbackFrom = new Date(now.getTime() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const fallbackTo = new Date(now.getTime() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const from = parseDateInput(body?.from) ?? fallbackFrom;
+    const to = parseDateInput(body?.to) ?? fallbackTo;
 
     const url = `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${FINNHUB_API_KEY}`;
     const r = await fetch(url);
