@@ -192,6 +192,24 @@ const Auth = () => {
                   <FieldGroup id="su-name" label="Nom complet" name="full_name" required />
                   <FieldGroup id="su-email" label="Email" name="email" type="email" required />
                   <FieldGroup id="su-pw" label="Mot de passe" name="password" type="password" minLength={6} required hint="Minimum 6 caractères" />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-country" className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+                      Pays (obligatoire)
+                    </Label>
+                    <Select name="country_code" required>
+                      <SelectTrigger id="su-country" className="h-11 bg-background/40 border-border/60">
+                        <SelectValue placeholder="Sélectionne ton pays" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[280px]">
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>{c.flag} {c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground/70">
+                      Utilisé pour le classement régional. Modifiable plus tard.
+                    </p>
+                  </div>
                   <Button type="submit" className="w-full h-11 bg-gradient-brand text-primary-foreground border-0 font-semibold glow-cyan" disabled={loading}>
                     {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                     Créer mon compte →
