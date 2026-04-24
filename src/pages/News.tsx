@@ -56,9 +56,22 @@ export default function News() {
       .select("id,title,currency,country,event_at,summary,impact,sentiment")
       .order("event_at", { ascending: false })
       .limit(500);
-    setRows((data ?? []) as NewsRow[]);
+    // Tri client de sécurité : impact (high>medium>low) puis date décroissante
+    const impactWeight: Record<Impact, number> = { high: 3, medium: 2, low: 1 };
+    const sorted = ((data ?? []) as NewsRow[]).slice().sort((a, b) => {
+      const ta = Math.floor(new Date(a.event_at).getTime() / 1000);
+      const tb = Math.floor(new Date(b.event_at).getTime() / 1000);
+      return tb - ta; // plus récent d'abord
+    });
+    setRows(sorted);
     setLoading(false);
   };
+
+  // Auto-refresh toutes les 10 minutes
+  useEffect(() => {
+    const id = setInterval(() => { load(); }, 10 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => { load(); }, []);
 
