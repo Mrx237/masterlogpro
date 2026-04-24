@@ -50,39 +50,69 @@ export default function News() {
   const [customDate, setCustomDate] = useState<Date | undefined>();
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = async () => {
+  const getRange = useCallback((): NewsTimeRange => {
+    return getActiveNewsRange(dateMode, customDate) ?? getDefaultNewsRange();
+  }, [dateMode, customDate]);
+
+  const load = useCallback(async (options?: { forceRefresh?: boolean }) => {
+    const range = getRange();
+    const cacheKey = `economic-news:${range.fromDate}:${range.toDate}`;
+
     setLoading(true);
-    const { data } = await supabase
+
+    if (!options?.forceRefresh) {
+      const rawCache = localStorage.getItem(cacheKey);
+      if (rawCache) {
+        try {
+          const parsed = JSON.parse(rawCache) as { timestamp: number; rows: NewsRow[] };
+          if (Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+            setRows(sortEconomicNews(parsed.rows));
+            setLoading(false);
+            return;
+          }
+        } catch {
+          localStorage.removeItem(cacheKey);
+        }
+      }
+    }
+
+    const { data, error } = await supabase
       .from("economic_news")
       .select("id,title,currency,country,event_at,summary,impact,sentiment")
-      .order("event_at", { ascending: false })
-      .limit(500);
-    // Tri client de sécurité : impact (high>medium>low) puis date décroissante
-    const impactWeight: Record<Impact, number> = { high: 3, medium: 2, low: 1 };
-    const sorted = ((data ?? []) as NewsRow[]).slice().sort((a, b) => {
-      const ta = Math.floor(new Date(a.event_at).getTime() / 1000);
-      const tb = Math.floor(new Date(b.event_at).getTime() / 1000);
-      return tb - ta; // plus récent d'abord
-    });
+      .gte("event_at", range.fromIso)
+      .lte("event_at", range.toIso)
+      .limit(5000);
+
+    if (error) {
+      toast.error("Impossible de charger les news");
+      setRows([]);
+      setLoading(false);
+      return;
+    }
+
+    const sorted = sortEconomicNews((data ?? []) as NewsRow[]);
     setRows(sorted);
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), rows: sorted }));
     setLoading(false);
-  };
+  }, [getRange]);
 
-  // Auto-refresh toutes les 10 minutes
+  useEffect(() => { void load(); }, [load]);
+
   useEffect(() => {
-    const id = setInterval(() => { load(); }, 10 * 60 * 1000);
+    const id = setInterval(() => { void load({ forceRefresh: true }); }, 10 * 60 * 1000);
     return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => { load(); }, []);
+  }, [load]);
 
   const refresh = async () => {
+    const range = getRange();
     setRefreshing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("fetch-news");
+      const { data, error } = await supabase.functions.invoke("fetch-news", {
+        body: { from: range.fromDate, to: range.toDate },
+      });
       if (error) throw error;
       toast.success(`${data?.upserted ?? 0} news synchronisées`);
-      await load();
+      await load({ forceRefresh: true });
     } catch (e: any) {
       toast.error("Échec de la synchro : " + (e?.message ?? "inconnu"));
     } finally {
@@ -90,37 +120,23 @@ export default function News() {
     }
   };
 
-  // Auto-refresh quand l'utilisateur ouvre la page si la news la plus récente date de plus d'1h
   useEffect(() => {
-    if (loading || refreshing || rows.length === 0) return;
-    const latest = new Date(rows[0].event_at).getTime();
-    const oldestThreshold = Date.now() - 60 * 60 * 1000;
-    if (latest < oldestThreshold) refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+    if (loading || refreshing || rows.length > 0) return;
+    void refresh();
+  }, [loading, refreshing, rows.length]);
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== "all" && r.impact !== filter) return false;
-    if (q && !`${r.title} ${r.currency}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (q && !`${r.title} ${r.currency} ${r.country ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
 
-    if (dateMode !== "all") {
-      // Comparaison en timestamp UNIX (secondes), bornes 00:00 → 23:59 locales
-      const eventTs = Math.floor(new Date(r.event_at).getTime() / 1000);
-      const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return Math.floor(x.getTime()/1000); };
-      const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999); return Math.floor(x.getTime()/1000); };
-
-      if (dateMode === "today") {
-        const now = new Date();
-        if (eventTs < startOfDay(now) || eventTs > endOfDay(now)) return false;
-      } else if (dateMode === "week") {
-        const now = new Date();
-        const start = new Date(now); start.setDate(now.getDate() - now.getDay());
-        const end = new Date(start); end.setDate(start.getDate() + 6);
-        if (eventTs < startOfDay(start) || eventTs > endOfDay(end)) return false;
-      } else if (dateMode === "custom" && customDate) {
-        if (eventTs < startOfDay(customDate) || eventTs > endOfDay(customDate)) return false;
-      }
+    const activeRange = getActiveNewsRange(dateMode, customDate);
+    if (activeRange) {
+      const eventTs = toUnixSeconds(r.event_at);
+      const fromTs = toUnixSeconds(activeRange.fromIso);
+      const toTs = toUnixSeconds(activeRange.toIso);
+      if (eventTs < fromTs || eventTs > toTs) return false;
     }
+
     return true;
   }), [rows, filter, q, dateMode, customDate]);
 
