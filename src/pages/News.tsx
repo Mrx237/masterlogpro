@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { getActiveNewsRange, getDefaultNewsRange, sortEconomicNews, toUnixSeconds, type NewsTimeRange } from "@/lib/newsDates";
 import { impactLabel, sentimentLabel, type Impact, type Sentiment } from "@/lib/newsBot";
 
 interface NewsRow {
