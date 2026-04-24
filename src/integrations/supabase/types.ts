@@ -213,39 +213,143 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          continent: string | null
+          country_code: string | null
+          country_name: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
           initial_capital: number | null
+          is_flagged: boolean
+          is_verified: boolean
           last_seen_at: string | null
+          show_on_leaderboard: boolean
           status: Database["public"]["Enums"]["account_status"]
+          sub_region: string | null
           subscription_ends_at: string | null
           updated_at: string
+          username: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          continent?: string | null
+          country_code?: string | null
+          country_name?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id: string
           initial_capital?: number | null
+          is_flagged?: boolean
+          is_verified?: boolean
           last_seen_at?: string | null
+          show_on_leaderboard?: boolean
           status?: Database["public"]["Enums"]["account_status"]
+          sub_region?: string | null
           subscription_ends_at?: string | null
           updated_at?: string
+          username?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          continent?: string | null
+          country_code?: string | null
+          country_name?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           initial_capital?: number | null
+          is_flagged?: boolean
+          is_verified?: boolean
           last_seen_at?: string | null
+          show_on_leaderboard?: boolean
           status?: Database["public"]["Enums"]["account_status"]
+          sub_region?: string | null
           subscription_ends_at?: string | null
           updated_at?: string
+          username?: string | null
         }
         Relationships: []
+      }
+      trader_monthly_stats: {
+        Row: {
+          computed_at: string
+          consistency_score: number
+          continent_rank: number | null
+          country_rank: number | null
+          created_at: string
+          global_rank: number | null
+          id: string
+          is_suspicious: boolean
+          losses: number
+          profit_pct: number
+          rank_label: string
+          risk_score: number
+          season_month: string
+          total_profit_usd: number
+          total_score: number
+          total_trades: number
+          updated_at: string
+          user_id: string
+          win_rate: number
+          wins: number
+        }
+        Insert: {
+          computed_at?: string
+          consistency_score?: number
+          continent_rank?: number | null
+          country_rank?: number | null
+          created_at?: string
+          global_rank?: number | null
+          id?: string
+          is_suspicious?: boolean
+          losses?: number
+          profit_pct?: number
+          rank_label?: string
+          risk_score?: number
+          season_month: string
+          total_profit_usd?: number
+          total_score?: number
+          total_trades?: number
+          updated_at?: string
+          user_id: string
+          win_rate?: number
+          wins?: number
+        }
+        Update: {
+          computed_at?: string
+          consistency_score?: number
+          continent_rank?: number | null
+          country_rank?: number | null
+          created_at?: string
+          global_rank?: number | null
+          id?: string
+          is_suspicious?: boolean
+          losses?: number
+          profit_pct?: number
+          rank_label?: string
+          risk_score?: number
+          season_month?: string
+          total_profit_usd?: number
+          total_score?: number
+          total_trades?: number
+          updated_at?: string
+          user_id?: string
+          win_rate?: number
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trader_monthly_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trades: {
         Row: {
@@ -390,6 +494,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_trader_monthly_stats: {
+        Args: { _season: string; _user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -398,6 +506,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      refresh_leaderboard: { Args: never; Returns: Json }
     }
     Enums: {
       account_status: "pending" | "active" | "expired"
