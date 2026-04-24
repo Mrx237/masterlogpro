@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Activity, ArrowLeft, Loader2, ShieldCheck, TrendingUp, Zap } from "lucide-react";
+import { COUNTRIES } from "@/lib/countries";
 
 const signupSchema = z.object({
   full_name: z.string().trim().min(2, "Nom trop court").max(80),
   email: z.string().trim().email("Email invalide").max(255),
   password: z.string().min(6, "Min. 6 caractères").max(72),
+  country_code: z.string().length(2, "Pays requis"),
 });
 const loginSchema = z.object({
   email: z.string().trim().email("Email invalide").max(255),
@@ -36,8 +39,12 @@ const Auth = () => {
     const fd = new FormData(e.currentTarget);
     const parsed = signupSchema.safeParse(Object.fromEntries(fd));
     if (!parsed.success) { toast.error(parsed.error.errors[0].message); return; }
+
+    const country = COUNTRIES.find((c) => c.code === parsed.data.country_code);
+    if (!country) { toast.error("Pays invalide"); return; }
+
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signupData, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
@@ -45,8 +52,20 @@ const Auth = () => {
         data: { full_name: parsed.data.full_name },
       },
     });
+
+    if (error) { setLoading(false); toast.error(error.message); return; }
+
+    // Mise à jour du profil avec pays / continent / sous-région
+    if (signupData.user) {
+      await supabase.from("profiles").update({
+        country_code: country.code,
+        country_name: country.name,
+        continent: country.continent,
+        sub_region: country.subRegion,
+      }).eq("id", signupData.user.id);
+    }
+
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
     toast.success("Compte créé !");
     navigate("/dashboard");
   }
@@ -173,6 +192,24 @@ const Auth = () => {
                   <FieldGroup id="su-name" label="Nom complet" name="full_name" required />
                   <FieldGroup id="su-email" label="Email" name="email" type="email" required />
                   <FieldGroup id="su-pw" label="Mot de passe" name="password" type="password" minLength={6} required hint="Minimum 6 caractères" />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-country" className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+                      Pays (obligatoire)
+                    </Label>
+                    <Select name="country_code" required>
+                      <SelectTrigger id="su-country" className="h-11 bg-background/40 border-border/60">
+                        <SelectValue placeholder="Sélectionne ton pays" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[280px]">
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>{c.flag} {c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground/70">
+                      Utilisé pour le classement régional. Modifiable plus tard.
+                    </p>
+                  </div>
                   <Button type="submit" className="w-full h-11 bg-gradient-brand text-primary-foreground border-0 font-semibold glow-cyan" disabled={loading}>
                     {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                     Créer mon compte →

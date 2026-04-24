@@ -20,6 +20,7 @@ import NewsDetail from "./pages/NewsDetail.tsx";
 import Calculator from "./pages/Calculator.tsx";
 import Profile from "./pages/Profile.tsx";
 import Admin from "./pages/Admin.tsx";
+import Leaderboard from "./pages/Leaderboard.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/news/:id" element={<ProtectedRoute><NewsDetail /></ProtectedRoute>} />
           <Route path="/calculateur" element={<ProtectedRoute><Calculator /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
