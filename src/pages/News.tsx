@@ -103,16 +103,21 @@ export default function News() {
     if (q && !`${r.title} ${r.currency}`.toLowerCase().includes(q.toLowerCase())) return false;
 
     if (dateMode !== "all") {
-      const d = new Date(r.event_at);
-      const now = new Date();
+      // Comparaison en timestamp UNIX (secondes), bornes 00:00 → 23:59 locales
+      const eventTs = Math.floor(new Date(r.event_at).getTime() / 1000);
+      const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return Math.floor(x.getTime()/1000); };
+      const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999); return Math.floor(x.getTime()/1000); };
+
       if (dateMode === "today") {
-        if (d.toDateString() !== now.toDateString()) return false;
+        const now = new Date();
+        if (eventTs < startOfDay(now) || eventTs > endOfDay(now)) return false;
       } else if (dateMode === "week") {
-        const start = new Date(now); start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0);
-        const end = new Date(start); end.setDate(start.getDate() + 7);
-        if (d < start || d >= end) return false;
+        const now = new Date();
+        const start = new Date(now); start.setDate(now.getDate() - now.getDay());
+        const end = new Date(start); end.setDate(start.getDate() + 6);
+        if (eventTs < startOfDay(start) || eventTs > endOfDay(end)) return false;
       } else if (dateMode === "custom" && customDate) {
-        if (d.toDateString() !== customDate.toDateString()) return false;
+        if (eventTs < startOfDay(customDate) || eventTs > endOfDay(customDate)) return false;
       }
     }
     return true;
