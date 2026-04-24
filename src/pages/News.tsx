@@ -56,9 +56,22 @@ export default function News() {
       .select("id,title,currency,country,event_at,summary,impact,sentiment")
       .order("event_at", { ascending: false })
       .limit(500);
-    setRows((data ?? []) as NewsRow[]);
+    // Tri client de sécurité : impact (high>medium>low) puis date décroissante
+    const impactWeight: Record<Impact, number> = { high: 3, medium: 2, low: 1 };
+    const sorted = ((data ?? []) as NewsRow[]).slice().sort((a, b) => {
+      const ta = Math.floor(new Date(a.event_at).getTime() / 1000);
+      const tb = Math.floor(new Date(b.event_at).getTime() / 1000);
+      return tb - ta; // plus récent d'abord
+    });
+    setRows(sorted);
     setLoading(false);
   };
+
+  // Auto-refresh toutes les 10 minutes
+  useEffect(() => {
+    const id = setInterval(() => { load(); }, 10 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => { load(); }, []);
 
@@ -90,16 +103,21 @@ export default function News() {
     if (q && !`${r.title} ${r.currency}`.toLowerCase().includes(q.toLowerCase())) return false;
 
     if (dateMode !== "all") {
-      const d = new Date(r.event_at);
-      const now = new Date();
+      // Comparaison en timestamp UNIX (secondes), bornes 00:00 → 23:59 locales
+      const eventTs = Math.floor(new Date(r.event_at).getTime() / 1000);
+      const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return Math.floor(x.getTime()/1000); };
+      const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999); return Math.floor(x.getTime()/1000); };
+
       if (dateMode === "today") {
-        if (d.toDateString() !== now.toDateString()) return false;
+        const now = new Date();
+        if (eventTs < startOfDay(now) || eventTs > endOfDay(now)) return false;
       } else if (dateMode === "week") {
-        const start = new Date(now); start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0);
-        const end = new Date(start); end.setDate(start.getDate() + 7);
-        if (d < start || d >= end) return false;
+        const now = new Date();
+        const start = new Date(now); start.setDate(now.getDate() - now.getDay());
+        const end = new Date(start); end.setDate(start.getDate() + 6);
+        if (eventTs < startOfDay(start) || eventTs > endOfDay(end)) return false;
       } else if (dateMode === "custom" && customDate) {
-        if (d.toDateString() !== customDate.toDateString()) return false;
+        if (eventTs < startOfDay(customDate) || eventTs > endOfDay(customDate)) return false;
       }
     }
     return true;
@@ -181,8 +199,11 @@ export default function News() {
         {loading ? (
           <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
-          <Card className="glass p-10 text-center text-sm text-muted-foreground">
-            Aucune news pour cette sélection.
+          <Card className="glass p-10 text-center text-sm text-muted-foreground space-y-3">
+            <p>Aucune news économique importante pour cette {dateMode === "custom" ? "date" : dateMode === "today" ? "journée" : dateMode === "week" ? "semaine" : "sélection"}.</p>
+            <Button size="sm" variant="outline" onClick={refresh} disabled={refreshing} className="gap-2">
+              <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /> Actualiser depuis Finnhub
+            </Button>
           </Card>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
