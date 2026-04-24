@@ -199,8 +199,11 @@ export default function News() {
         {loading ? (
           <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
-          <Card className="glass p-10 text-center text-sm text-muted-foreground">
-            Aucune news pour cette sélection.
+          <Card className="glass p-10 text-center text-sm text-muted-foreground space-y-3">
+            <p>Aucune news économique importante pour cette {dateMode === "custom" ? "date" : dateMode === "today" ? "journée" : dateMode === "week" ? "semaine" : "sélection"}.</p>
+            <Button size="sm" variant="outline" onClick={refresh} disabled={refreshing} className="gap-2">
+              <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /> Actualiser depuis Finnhub
+            </Button>
           </Card>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
