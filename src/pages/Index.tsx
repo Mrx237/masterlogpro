@@ -5,7 +5,8 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { OFFERS, formatFCFA } from "@/lib/constants";
 import {
   ArrowRight, ArrowUpRight, BarChart3, Brain, CheckCircle2, GraduationCap,
-  LineChart, Sparkles, TrendingUp, Zap, Activity, Target, Shield, ChevronRight
+  LineChart, Sparkles, TrendingUp, Zap, Activity, Target, Shield, ChevronRight,
+  Trophy, Globe2, Newspaper
 } from "lucide-react";
 
 const Index = () => {
