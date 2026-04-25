@@ -5,7 +5,8 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { OFFERS, formatFCFA } from "@/lib/constants";
 import {
   ArrowRight, ArrowUpRight, BarChart3, Brain, CheckCircle2, GraduationCap,
-  LineChart, Sparkles, TrendingUp, Zap, Activity, Target, Shield, ChevronRight
+  LineChart, Sparkles, TrendingUp, Zap, Activity, Target, Shield, ChevronRight,
+  Trophy, Globe2, Newspaper
 } from "lucide-react";
 
 const Index = () => {
@@ -152,10 +153,64 @@ const Index = () => {
       </section>
 
       {/* ╔══════════════════════════════════════════════════════════╗
+          ║  NEW MODULES — Leaderboard + News + Bot                   ║
+          ╚══════════════════════════════════════════════════════════╝ */}
+      <section className="container py-20 md:py-28 relative">
+        <SectionLabel num="03" label="Nouveau" />
+        <div className="mt-10 mb-14 max-w-2xl">
+          <h2 className="font-display text-4xl md:text-5xl font-bold leading-tight">
+            Plus qu'un journal.<br />
+            <span className="text-gradient-cyan">Une communauté connectée au marché.</span>
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          <Link to="/leaderboard" className="group glass rounded-2xl p-7 ring-cyan hover:-translate-y-0.5 transition-all relative overflow-hidden">
+            <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-primary/15 blur-3xl" />
+            <Trophy className="h-7 w-7 text-primary mb-4" />
+            <div className="text-[11px] font-mono uppercase tracking-widest text-primary mb-2">Live</div>
+            <h3 className="font-display text-xl font-bold mb-2">Classement mondial</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              Compare-toi aux meilleurs traders. Saison mensuelle, filtres par pays, continent et global.
+            </p>
+            <div className="flex items-center gap-1.5 text-sm text-primary font-medium">
+              Voir le classement <ArrowUpRight className="h-4 w-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
+
+          <Link to="/news" className="group glass rounded-2xl p-7 hover:-translate-y-0.5 transition-all relative overflow-hidden">
+            <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-accent/15 blur-3xl" />
+            <Newspaper className="h-7 w-7 text-accent mb-4" />
+            <div className="text-[11px] font-mono uppercase tracking-widest text-accent mb-2">Temps réel</div>
+            <h3 className="font-display text-xl font-bold mb-2">News économiques</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              Calendrier économique synchronisé. NFP, CPI, FOMC — toutes les news triées par impact et date.
+            </p>
+            <div className="flex items-center gap-1.5 text-sm text-accent font-medium">
+              Ouvrir le calendrier <ArrowUpRight className="h-4 w-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
+
+          <Link to="/analyse" className="group glass rounded-2xl p-7 hover:-translate-y-0.5 transition-all relative overflow-hidden">
+            <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-student/15 blur-3xl" />
+            <Brain className="h-7 w-7 text-student mb-4" />
+            <div className="text-[11px] font-mono uppercase tracking-widest text-student mb-2">IA</div>
+            <h3 className="font-display text-xl font-bold mb-2">Bot d'analyse expert</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              Une analyse fondamentale claire pour chaque news : zone, impact, biais, conclusion d'expert.
+            </p>
+            <div className="flex items-center gap-1.5 text-sm text-student font-medium">
+              Découvrir l'analyse <ArrowUpRight className="h-4 w-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* ╔══════════════════════════════════════════════════════════╗
           ║  TWO PATHS — Étudiant vs Abonné (CRITICAL DIFFERENTIATION)║
           ╚══════════════════════════════════════════════════════════╝ */}
       <section className="container py-20 md:py-28 relative">
-        <SectionLabel num="03" label="Deux parcours" />
+        <SectionLabel num="04" label="Deux parcours" />
         <div className="mt-10 mb-14 text-center max-w-2xl mx-auto">
           <h2 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-4">
             Choisis ton <span className="italic font-light">niveau d'engagement.</span>
@@ -170,14 +225,14 @@ const Index = () => {
             kicker="Formation complète"
             title="Devenir trader."
             price={formatFCFA(OFFERS.formation.price)}
-            priceNote="Paiement unique · accès illimité"
+            priceNote="Formation 50 000 + Accès plateforme 20 000 · paiement unique"
             description="Tu veux apprendre vraiment. Tu veux qu'un coach analyse tes trades. Tu veux des exercices et un cadre."
             features={[
-              "Journal de trading complet",
+              "Formation trading complète (50 000 FCFA)",
+              "Accès plateforme illimité (20 000 FCFA)",
               "Stats avancées + analyse fondamentale",
               "Exercices structurés et corrigés",
               "Feedback personnel du coach",
-              "Accès illimité à vie",
             ]}
             cta="Rejoindre la formation"
             href="/subscribe?offer=formation"
@@ -210,7 +265,7 @@ const Index = () => {
       <section className="relative py-20 md:py-28">
         <div className="absolute inset-0 bg-aurora opacity-20 blur-3xl" />
         <div className="container relative">
-          <SectionLabel num="04" label="Process" />
+          <SectionLabel num="05" label="Process" />
           <h2 className="font-display text-4xl md:text-5xl font-bold mt-10 mb-14 max-w-3xl">
             De l'inscription au premier trade.<br />
             <span className="text-gradient-cyan">Cinq minutes.</span>

@@ -9,7 +9,7 @@ export const MOBILE_MONEY = {
 export type OfferKey = "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m";
 
 export const OFFERS: Record<OfferKey, { label: string; price: number; description: string; type: "formation" | "subscription"; durationDays?: number }> = {
-  formation: { label: "Formation complète", price: 20000, description: "Accès illimité : journal, stats avancées, exercices, feedback coach.", type: "formation" },
+  formation: { label: "Formation complète", price: 70000, description: "Accès illimité : journal, stats avancées, exercices, feedback coach. Formation 50 000 + accès plateforme 20 000.", type: "formation" },
   sub_1m: { label: "Abonnement 1 mois", price: 5000, description: "Journal de trading complet pendant 1 mois.", type: "subscription", durationDays: 30 },
   sub_3m: { label: "Abonnement 3 mois", price: 12500, description: "Journal pendant 3 mois — économisez 17%.", type: "subscription", durationDays: 90 },
   sub_6m: { label: "Abonnement 6 mois", price: 25000, description: "Journal pendant 6 mois — économisez 17%.", type: "subscription", durationDays: 180 },
