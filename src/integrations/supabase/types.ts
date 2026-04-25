@@ -163,14 +163,22 @@ export type Database = {
       payment_requests: {
         Row: {
           admin_note: string | null
+          amount: number | null
           amount_fcfa: number
           created_at: string
+          currency: string | null
           id: string
+          metadata: Json | null
           method: Database["public"]["Enums"]["payment_method"]
           note: string | null
           offer: Database["public"]["Enums"]["offer_type"]
+          paid_at: string | null
           payer_phone: string | null
           proof_path: string | null
+          provider: string | null
+          provider_status: string | null
+          provider_tx_id: string | null
+          provider_tx_ref: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["payment_status"]
@@ -179,14 +187,22 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          amount?: number | null
           amount_fcfa: number
           created_at?: string
+          currency?: string | null
           id?: string
+          metadata?: Json | null
           method: Database["public"]["Enums"]["payment_method"]
           note?: string | null
           offer: Database["public"]["Enums"]["offer_type"]
+          paid_at?: string | null
           payer_phone?: string | null
           proof_path?: string | null
+          provider?: string | null
+          provider_status?: string | null
+          provider_tx_id?: string | null
+          provider_tx_ref?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
@@ -195,14 +211,22 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          amount?: number | null
           amount_fcfa?: number
           created_at?: string
+          currency?: string | null
           id?: string
+          metadata?: Json | null
           method?: Database["public"]["Enums"]["payment_method"]
           note?: string | null
           offer?: Database["public"]["Enums"]["offer_type"]
+          paid_at?: string | null
           payer_phone?: string | null
           proof_path?: string | null
+          provider?: string | null
+          provider_status?: string | null
+          provider_tx_id?: string | null
+          provider_tx_ref?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
@@ -517,7 +541,7 @@ export type Database = {
       news_impact_level: "high" | "medium" | "low"
       news_sentiment: "bullish" | "bearish" | "neutral"
       offer_type: "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m"
-      payment_method: "mtn" | "orange" | "airtel"
+      payment_method: "mtn" | "orange" | "airtel" | "crypto" | "card"
       payment_status: "pending" | "approved" | "rejected"
       sentiment: "bullish" | "bearish" | "neutral"
       submission_status: "pending" | "submitted" | "graded"
@@ -658,7 +682,7 @@ export const Constants = {
       news_impact_level: ["high", "medium", "low"],
       news_sentiment: ["bullish", "bearish", "neutral"],
       offer_type: ["formation", "sub_1m", "sub_3m", "sub_6m", "sub_12m"],
-      payment_method: ["mtn", "orange", "airtel"],
+      payment_method: ["mtn", "orange", "airtel", "crypto", "card"],
       payment_status: ["pending", "approved", "rejected"],
       sentiment: ["bullish", "bearish", "neutral"],
       submission_status: ["pending", "submitted", "graded"],
