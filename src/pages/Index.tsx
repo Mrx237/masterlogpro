@@ -265,7 +265,7 @@ const Index = () => {
       <section className="relative py-20 md:py-28">
         <div className="absolute inset-0 bg-aurora opacity-20 blur-3xl" />
         <div className="container relative">
-          <SectionLabel num="04" label="Process" />
+          <SectionLabel num="05" label="Process" />
           <h2 className="font-display text-4xl md:text-5xl font-bold mt-10 mb-14 max-w-3xl">
             De l'inscription au premier trade.<br />
             <span className="text-gradient-cyan">Cinq minutes.</span>
