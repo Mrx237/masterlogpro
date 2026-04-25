@@ -170,14 +170,14 @@ const Index = () => {
             kicker="Formation complète"
             title="Devenir trader."
             price={formatFCFA(OFFERS.formation.price)}
-            priceNote="Paiement unique · accès illimité"
+            priceNote="Formation 50 000 + Accès plateforme 20 000 · paiement unique"
             description="Tu veux apprendre vraiment. Tu veux qu'un coach analyse tes trades. Tu veux des exercices et un cadre."
             features={[
-              "Journal de trading complet",
+              "Formation trading complète (50 000 FCFA)",
+              "Accès plateforme illimité (20 000 FCFA)",
               "Stats avancées + analyse fondamentale",
               "Exercices structurés et corrigés",
               "Feedback personnel du coach",
-              "Accès illimité à vie",
             ]}
             cta="Rejoindre la formation"
             href="/subscribe?offer=formation"
