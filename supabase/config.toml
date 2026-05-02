@@ -6,8 +6,5 @@ verify_jwt = false
 [functions.analyse-bot]
 verify_jwt = false
 
-[functions.fapshi-webhook]
-verify_jwt = false
-
 [functions.nowpayments-webhook]
 verify_jwt = false
