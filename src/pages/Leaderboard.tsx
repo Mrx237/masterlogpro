@@ -71,7 +71,7 @@ export default function Leaderboard() {
   const [continent, setContinent] = useState<Continent>("Africa");
   const [subRegion, setSubRegion] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("CM");
-  const [verifiedOnly, setVerifiedOnly] = useState(true);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
