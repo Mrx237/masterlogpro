@@ -31,6 +31,7 @@ interface UserRow {
   status: AccountStatus;
   subscription_ends_at: string | null;
   created_at: string;
+  initial_capital: number | null;
   roles: AppRole[];
   trades_count: number;
   total_pnl: number;
@@ -120,6 +121,7 @@ function UsersTab() {
           status: p.status,
           subscription_ends_at: p.subscription_ends_at,
           created_at: p.created_at,
+          initial_capital: p.initial_capital ?? null,
           roles: rolesMap.get(p.id) ?? [],
           trades_count: t.count,
           total_pnl: t.pnl,
@@ -264,7 +266,8 @@ function UserManageDialog({ user, onClose, onChanged }: { user: UserRow | null; 
 
         <div className="space-y-5 text-sm">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <MiniStat label="Capital init." value={user.initial_capital != null ? `$${Number(user.initial_capital).toFixed(0)}` : "—"} />
             <MiniStat label="Trades" value={user.trades_count} />
             <MiniStat label="Win rate" value={user.trades_count > 0 ? `${user.win_rate.toFixed(0)}%` : "—"} />
             <MiniStat label="P&L" value={`$${user.total_pnl.toFixed(2)}`} accent={user.total_pnl > 0 ? "gain" : user.total_pnl < 0 ? "loss" : undefined} />
