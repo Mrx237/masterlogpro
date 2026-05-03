@@ -257,65 +257,30 @@ const Dashboard = () => {
 
 /* ═══════════════════ STUDENT DASHBOARD ═══════════════════ */
 function StudentDashboard({
-  loading, trades, net, winRate, totalGain, totalLoss, pendingExercises, latestAnalysisTitle,
-  initialCapital, currentCapital, capitalPct, onEditCapital,
+  loading, trades, net, winRate, totalGain, totalLoss, wins, losses,
+  pendingExercises, latestAnalysisTitle,
+  initialCapital, currentCapital, capitalPct, maxRisk, onEditCapital,
 }: {
   loading: boolean; trades: Trade[]; net: number; winRate: number;
-  totalGain: number; totalLoss: number; pendingExercises: number; latestAnalysisTitle: string | null;
-  initialCapital: number; currentCapital: number; capitalPct: number; onEditCapital: () => void;
+  totalGain: number; totalLoss: number; wins: number; losses: number;
+  pendingExercises: number; latestAnalysisTitle: string | null;
+  initialCapital: number; currentCapital: number; capitalPct: number;
+  maxRisk: number; onEditCapital: () => void;
 }) {
   return (
     <>
-      {/* CAPITAL — bloc principal en haut */}
-      <CapitalCard
-        tone="gold"
-        initial={initialCapital}
-        current={currentCapital}
-        pct={capitalPct}
-        onEdit={onEditCapital}
-      />
+      <CapitalCard tone="gold" initial={initialCapital} current={currentCapital} pct={capitalPct} onEdit={onEditCapital} />
 
-      {/* HERO STAT — net result GROS */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1 glass-strong relative overflow-hidden p-7">
-          <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-student/15 blur-3xl" />
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-mono mb-3">🟢 Résultat net</div>
-          <div className={cn(
-            "font-mono font-bold text-5xl md:text-6xl tracking-tight leading-none",
-            net > 0 ? "text-gain" : net < 0 ? "text-loss" : "text-foreground"
-          )}>
-            {net > 0 ? "+" : ""}{net.toFixed(2)}<span className="text-2xl text-muted-foreground ml-1">$</span>
-          </div>
-          <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <TrendingUp className="h-3 w-3" />
-            Sur {trades.length} trade{trades.length > 1 ? "s" : ""} enregistré{trades.length > 1 ? "s" : ""}
-          </div>
-        </Card>
-        <StatTile label="📊 Win rate" value={`${winRate}%`} accent="student" />
-        <StatTile label="🔁 Nombre de trades" value={trades.length} />
-      </div>
-
-      {/* GAINS / PERTES */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatTile label="📈 Gains" value={`+${totalGain.toFixed(2)} $`} className="text-gain" />
-        <StatTile label="📉 Pertes" value={`${totalLoss.toFixed(2)} $`} className="text-loss" />
-      </div>
-
-      {/* EQUITY CURVE */}
-      <Card className="glass p-5 md:p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-student">Évolution du capital</div>
-            <h3 className="font-display text-lg font-bold mt-1">Courbe d'équité</h3>
-          </div>
-          <Badge variant="outline" className="border-student/40 text-student">Élève</Badge>
-        </div>
-        {loading ? (
-          <div className="h-[260px] grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-        ) : (
-          <EquityChart trades={trades} tone="gold" />
-        )}
-      </Card>
+      {/* DONUTS — performance visuelle */}
+      {loading ? (
+        <Card className="glass p-10 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></Card>
+      ) : (
+        <PerformanceDonuts
+          trades={trades} totalGain={totalGain} totalLoss={totalLoss}
+          net={net} winRate={winRate} wins={wins} losses={losses}
+          capital={initialCapital} maxRisk={maxRisk} tone="gold"
+        />
+      )}
 
       {/* STUDENT-ONLY MODULES */}
       <div className="grid md:grid-cols-3 gap-4">
@@ -337,7 +302,6 @@ function StudentDashboard({
         />
       </div>
 
-      {/* INFO MESSAGE */}
       <div className="rounded-xl border border-student/30 bg-student/5 p-4 flex items-start gap-3">
         <span className="text-lg">💡</span>
         <p className="text-sm text-foreground/90"><strong>Plus tu ajoutes de trades, plus ton analyse devient précise.</strong> Documente chaque entrée pour identifier tes patterns.</p>
@@ -349,64 +313,32 @@ function StudentDashboard({
 /* ═══════════════════ SUBSCRIBER DASHBOARD ═══════════════════ */
 function SubscriberDashboard({
   loading, trades, net, winRate, totalGain, totalLoss, wins, losses,
-  initialCapital, currentCapital, capitalPct, onEditCapital,
+  initialCapital, currentCapital, capitalPct, maxRisk, onEditCapital,
 }: {
   loading: boolean; trades: Trade[]; net: number; winRate: number;
   totalGain: number; totalLoss: number; wins: number; losses: number;
-  initialCapital: number; currentCapital: number; capitalPct: number; onEditCapital: () => void;
+  initialCapital: number; currentCapital: number; capitalPct: number;
+  maxRisk: number; onEditCapital: () => void;
 }) {
-  const profitFactor = totalLoss !== 0 ? Math.abs(totalGain / totalLoss).toFixed(2) : "—";
   return (
     <>
-      <CapitalCard
-        tone="cyan"
-        initial={initialCapital}
-        current={currentCapital}
-        pct={capitalPct}
-        onEdit={onEditCapital}
-      />
+      <CapitalCard tone="cyan" initial={initialCapital} current={currentCapital} pct={capitalPct} onEdit={onEditCapital} />
 
-      <div className="grid lg:grid-cols-4 gap-3 md:gap-4">
-        <Card className="lg:col-span-2 glass-strong relative overflow-hidden p-7">
-          <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-primary/15 blur-3xl" />
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-mono mb-3">P&L net</div>
-          <div className={cn(
-            "font-mono font-bold text-5xl md:text-6xl tracking-tight leading-none",
-            net > 0 ? "text-gain" : net < 0 ? "text-loss" : "text-foreground"
-          )}>
-            {net > 0 ? "+" : ""}{net.toFixed(2)}<span className="text-2xl text-muted-foreground ml-1">$</span>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-            <div><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Win rate</div><div className="font-mono text-lg font-semibold text-primary">{winRate}%</div></div>
-            <div><div className="text-[10px] uppercase tracking-wider text-muted-foreground">PF</div><div className="font-mono text-lg font-semibold">{profitFactor}</div></div>
-            <div><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Trades</div><div className="font-mono text-lg font-semibold">{trades.length}</div></div>
-          </div>
-        </Card>
-        <StatTile label="Gains" value={`+${totalGain.toFixed(2)} $`} className="text-gain" />
-        <StatTile label="Pertes" value={`${totalLoss.toFixed(2)} $`} className="text-loss" />
-        <StatTile label="Wins" value={wins} className="text-gain" />
-        <StatTile label="Losses" value={losses} className="text-loss" />
-      </div>
-
-      <Card className="glass p-5 md:p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-primary">Performance</div>
-            <h3 className="font-display text-lg font-bold mt-1">Equity curve</h3>
-          </div>
-          <Badge variant="outline" className="border-primary/40 text-primary">Abonné</Badge>
-        </div>
-        {loading ? (
-          <div className="h-[260px] grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-        ) : (
-          <EquityChart trades={trades} tone="cyan" />
-        )}
-      </Card>
+      {loading ? (
+        <Card className="glass p-10 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></Card>
+      ) : (
+        <PerformanceDonuts
+          trades={trades} totalGain={totalGain} totalLoss={totalLoss}
+          net={net} winRate={winRate} wins={wins} losses={losses}
+          capital={initialCapital} maxRisk={maxRisk} tone="cyan"
+        />
+      )}
 
       <ModuleCard to="/trades" tone="cyan" icon={ListChecks} title="Mes trades" desc="Historique complet, filtres et statistiques par paire." meta={`${trades.length} trade${trades.length > 1 ? "s" : ""}`} />
     </>
   );
 }
+
 
 /* ═══════════════════ HELPERS ═══════════════════ */
 function StatTile({ label, value, className, accent }: { label: string; value: React.ReactNode; className?: string; accent?: "student" | "subscriber" }) {
