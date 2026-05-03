@@ -225,9 +225,10 @@ const Dashboard = () => {
         ) : studentMode ? (
           <StudentDashboard
             loading={loading} trades={trades} net={net} winRate={winRate}
-            totalGain={totalGain} totalLoss={totalLoss}
+            totalGain={totalGain} totalLoss={totalLoss} wins={wins} losses={losses}
             pendingExercises={pendingExercises} latestAnalysisTitle={latestAnalysisTitle}
             initialCapital={initialCapital} currentCapital={currentCapital} capitalPct={capitalPct}
+            maxRisk={maxRisk}
             onEditCapital={() => setEditingCapital(true)}
           />
         ) : (
@@ -235,6 +236,7 @@ const Dashboard = () => {
             loading={loading} trades={trades} net={net} winRate={winRate}
             totalGain={totalGain} totalLoss={totalLoss} wins={wins} losses={losses}
             initialCapital={initialCapital} currentCapital={currentCapital} capitalPct={capitalPct}
+            maxRisk={maxRisk}
             onEditCapital={() => setEditingCapital(true)}
           />
         )}
