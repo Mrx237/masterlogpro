@@ -238,10 +238,12 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          best_streak: number | null
           continent: string | null
           country_code: string | null
           country_name: string | null
           created_at: string
+          daily_loss_limit: number | null
           email: string | null
           full_name: string | null
           id: string
@@ -249,19 +251,25 @@ export type Database = {
           is_flagged: boolean
           is_verified: boolean
           last_seen_at: string | null
+          max_risk_per_trade: number | null
           show_on_leaderboard: boolean
           status: Database["public"]["Enums"]["account_status"]
           sub_region: string | null
           subscription_ends_at: string | null
+          trading_experience: string | null
+          trading_style: string | null
           updated_at: string
           username: string | null
+          weekly_trade_target: number | null
         }
         Insert: {
           avatar_url?: string | null
+          best_streak?: number | null
           continent?: string | null
           country_code?: string | null
           country_name?: string | null
           created_at?: string
+          daily_loss_limit?: number | null
           email?: string | null
           full_name?: string | null
           id: string
@@ -269,19 +277,25 @@ export type Database = {
           is_flagged?: boolean
           is_verified?: boolean
           last_seen_at?: string | null
+          max_risk_per_trade?: number | null
           show_on_leaderboard?: boolean
           status?: Database["public"]["Enums"]["account_status"]
           sub_region?: string | null
           subscription_ends_at?: string | null
+          trading_experience?: string | null
+          trading_style?: string | null
           updated_at?: string
           username?: string | null
+          weekly_trade_target?: number | null
         }
         Update: {
           avatar_url?: string | null
+          best_streak?: number | null
           continent?: string | null
           country_code?: string | null
           country_name?: string | null
           created_at?: string
+          daily_loss_limit?: number | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -289,12 +303,16 @@ export type Database = {
           is_flagged?: boolean
           is_verified?: boolean
           last_seen_at?: string | null
+          max_risk_per_trade?: number | null
           show_on_leaderboard?: boolean
           status?: Database["public"]["Enums"]["account_status"]
           sub_region?: string | null
           subscription_ends_at?: string | null
+          trading_experience?: string | null
+          trading_style?: string | null
           updated_at?: string
           username?: string | null
+          weekly_trade_target?: number | null
         }
         Relationships: []
       }
