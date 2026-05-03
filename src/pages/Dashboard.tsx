@@ -25,6 +25,105 @@ interface Trade {
   status: "win" | "loss" | "breakeven" | null;
 }
 
+/* ═══════════════════ DONUT GRID ═══════════════════ */
+function PerformanceDonuts({
+  trades, totalGain, totalLoss, net, winRate, wins, losses, capital, maxRisk, tone,
+}: {
+  trades: Trade[]; totalGain: number; totalLoss: number; net: number;
+  winRate: number; wins: number; losses: number; capital: number;
+  maxRisk: number; tone: "gold" | "cyan";
+}) {
+  const accent = tone === "gold" ? "hsl(var(--student))" : "hsl(var(--primary))";
+  const closed = wins + losses;
+
+  // 1) Performance globale
+  const perfSegs = [
+    { name: "Gains", value: Math.round(totalGain * 100) / 100, color: "hsl(var(--gain))" },
+    { name: "Pertes", value: Math.round(Math.abs(totalLoss) * 100) / 100, color: "hsl(var(--loss))" },
+  ];
+  const netStr = `${net >= 0 ? "+" : ""}${net.toFixed(2)}$`;
+  const netPct = capital > 0 ? (net / capital) * 100 : 0;
+
+  // 2) Win rate
+  const wrSegs = [
+    { name: "Wins", value: wins, color: "hsl(var(--gain))" },
+    { name: "Losses", value: losses, color: "hsl(var(--loss))" },
+  ];
+  const wrBadge: any = closed === 0 ? null
+    : winRate > 65 ? { label: "Excellent", tone: "gain" }
+    : winRate >= 50 ? { label: "Stable", tone: "primary" }
+    : { label: "À améliorer", tone: "loss" };
+
+  // 3) Risk discipline : loss respectant max_risk_per_trade % du capital
+  const limitUsd = capital * (maxRisk / 100);
+  const losingTrades = trades.filter((t) => (t.result_usd ?? 0) < 0);
+  const disciplined = losingTrades.filter((t) => Math.abs(t.result_usd ?? 0) <= limitUsd).length;
+  const undisciplined = losingTrades.length - disciplined;
+  const disciplinePct = losingTrades.length > 0
+    ? Math.round((disciplined / losingTrades.length) * 100)
+    : 100;
+  const riskSegs = [
+    { name: "Respecté", value: disciplined, color: "hsl(var(--gain))" },
+    { name: "Dépassé", value: undisciplined, color: "hsl(var(--warn))" },
+  ];
+
+  // 4) Buy vs Sell
+  const buys = trades.filter((t) => t.direction === "buy").length;
+  const sells = trades.filter((t) => t.direction === "sell").length;
+  const buySegs = [
+    { name: "Buy", value: buys, color: "hsl(var(--gain))" },
+    { name: "Sell", value: sells, color: "hsl(var(--loss))" },
+  ];
+  const dominant = buys === sells ? "Équilibré" : buys > sells ? "Buy" : "Sell";
+
+  return (
+    <div className="grid sm:grid-cols-2 gap-4">
+      <DonutCard
+        title="Performance globale"
+        description="Gains vs pertes en USD"
+        centerValue={netStr}
+        centerLabel={`${netPct >= 0 ? "+" : ""}${netPct.toFixed(1)}%`}
+        centerColorClass={net > 0 ? "text-gain" : net < 0 ? "text-loss" : "text-foreground"}
+        segments={perfSegs}
+        emptyMessage="Ajoute des trades pour voir ta performance"
+      />
+      <DonutCard
+        title="Win rate"
+        description="Trades gagnants vs perdants"
+        centerValue={`${winRate}%`}
+        centerLabel={`${closed} clôturé${closed > 1 ? "s" : ""}`}
+        centerColorClass={tone === "gold" ? "text-student" : "text-primary"}
+        segments={wrSegs}
+        badge={wrBadge}
+        emptyMessage="En attente de trades clôturés"
+      />
+      <DonutCard
+        title="Discipline (risque)"
+        description={`Limite: ${maxRisk}% / trade (≈ $${limitUsd.toFixed(0)})`}
+        centerValue={`${disciplinePct}%`}
+        centerLabel="respect"
+        centerColorClass={disciplinePct >= 80 ? "text-gain" : disciplinePct >= 50 ? "text-[hsl(var(--warn))]" : "text-loss"}
+        segments={riskSegs}
+        badge={losingTrades.length === 0 ? undefined
+          : disciplinePct >= 80 ? { label: "Discipliné", tone: "gain" }
+          : disciplinePct >= 50 ? { label: "Moyen", tone: "warn" }
+          : { label: "À corriger", tone: "loss" }}
+        emptyMessage="Aucune perte enregistrée 👌"
+      />
+      <DonutCard
+        title="Répartition Buy / Sell"
+        description="Direction de tes trades"
+        centerValue={dominant}
+        centerLabel={`${buys + sells} trades`}
+        centerColorClass="text-foreground"
+        segments={buySegs}
+        emptyMessage="Aucun trade enregistré"
+      />
+    </div>
+  );
+}
+
+
 const Dashboard = () => {
   const { user, profile, hasJournalAccess, isStudent, isAdmin, loading: authLoading } = useAuth();
   const [trades, setTrades] = useState<Trade[]>([]);
