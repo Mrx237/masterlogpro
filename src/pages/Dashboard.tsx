@@ -131,6 +131,7 @@ const Dashboard = () => {
   const [pendingExercises, setPendingExercises] = useState(0);
   const [latestAnalysisTitle, setLatestAnalysisTitle] = useState<string | null>(null);
   const [initialCapital, setInitialCapital] = useState<number>(1000);
+  const [maxRisk, setMaxRisk] = useState<number>(2);
   const [editingCapital, setEditingCapital] = useState(false);
 
   useEffect(() => {
@@ -147,12 +148,13 @@ const Dashboard = () => {
         isStudent || isAdmin
           ? supabase.from("weekly_analyses").select("title").order("week_start", { ascending: false }).limit(1)
           : Promise.resolve({ data: [] as any[] }),
-        supabase.from("profiles").select("initial_capital").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("initial_capital, max_risk_per_trade").eq("id", user.id).maybeSingle(),
       ]);
       if (t) setTrades(t as Trade[]);
       if (subs) setPendingExercises(subs.filter((s: any) => s.status !== "graded").length);
       if (analysis && analysis.length) setLatestAnalysisTitle(analysis[0].title);
       if (prof?.initial_capital != null) setInitialCapital(Number(prof.initial_capital));
+      if ((prof as any)?.max_risk_per_trade != null) setMaxRisk(Number((prof as any).max_risk_per_trade));
       setLoading(false);
     })();
   }, [user, isStudent, isAdmin]);
