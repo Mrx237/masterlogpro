@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { MotivationBanner } from "@/components/MotivationBanner";
-import { EquityChart } from "@/components/EquityChart";
+import { DonutCard } from "@/components/dashboard/DonutCard";
 import { Plus, Lock, Loader2, GraduationCap, BookOpen, LineChart, ListChecks, MessageSquare, Target, TrendingUp, TrendingDown, ArrowRight, Wallet, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
