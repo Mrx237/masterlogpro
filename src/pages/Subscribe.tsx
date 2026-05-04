@@ -113,6 +113,8 @@ const Subscribe = () => {
                   </div>
                   <div className="text-xs text-muted-foreground">paiement unique · accès à vie</div>
 
+                  <PromoBadge offerKey="formation" tone="gold" className="mt-4" />
+
                   <div className="divider-glow my-6" />
 
                   <div className="space-y-3 text-sm">
