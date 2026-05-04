@@ -206,7 +206,6 @@ const Subscribe = () => {
                   <Button
                     asChild
                     variant="outline"
-                    variant="outline"
                     className={cn(
                       "w-full mt-4 border-subscriber/40 text-subscriber hover:bg-subscriber/10 hover:text-subscriber",
                       isHighlight && "bg-gradient-subscriber text-subscriber-foreground border-0 glow-cyan hover:opacity-95"
