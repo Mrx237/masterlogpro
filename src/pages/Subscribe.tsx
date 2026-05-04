@@ -201,7 +201,7 @@ const Subscribe = () => {
                     </div>
                   </div>
 
-                  <Button
+                  <PromoBadge offerKey={key} tone="cyan" className="mt-3" />
                     asChild
                     variant="outline"
                     className={cn(
