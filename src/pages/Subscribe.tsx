@@ -8,6 +8,7 @@ import {
   MessageCircle, Crown, Calendar, Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PromoBadge } from "@/components/PromoBadge";
 
 const SUBS: { key: OfferKey; badge?: string; savings?: string }[] = [
   { key: "sub_1m" },
@@ -112,6 +113,8 @@ const Subscribe = () => {
                   </div>
                   <div className="text-xs text-muted-foreground">paiement unique · accès à vie</div>
 
+                  <PromoBadge offerKey="formation" tone="gold" className="mt-4" />
+
                   <div className="divider-glow my-6" />
 
                   <div className="space-y-3 text-sm">
@@ -197,6 +200,8 @@ const Subscribe = () => {
                       FCFA · {Math.round(o.price / months).toLocaleString("fr-FR")}/mois
                     </div>
                   </div>
+
+                  <PromoBadge offerKey={key} tone="cyan" className="mt-3" />
 
                   <Button
                     asChild
