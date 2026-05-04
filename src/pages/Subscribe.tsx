@@ -202,7 +202,10 @@ const Subscribe = () => {
                   </div>
 
                   <PromoBadge offerKey={key} tone="cyan" className="mt-3" />
+
+                  <Button
                     asChild
+                    variant="outline"
                     variant="outline"
                     className={cn(
                       "w-full mt-4 border-subscriber/40 text-subscriber hover:bg-subscriber/10 hover:text-subscriber",
