@@ -8,6 +8,7 @@ import {
   MessageCircle, Crown, Calendar, Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PromoBadge } from "@/components/PromoBadge";
 
 const SUBS: { key: OfferKey; badge?: string; savings?: string }[] = [
   { key: "sub_1m" },
