@@ -355,8 +355,9 @@ function HeroStatBand({
   onEditCapital: () => void;
 }) {
   const positive = capitalPct >= 0;
-  const accent = tone === "gold" ? "student" : "primary";
   const accentText = tone === "gold" ? "text-student" : "text-primary";
+  const accentBorder = tone === "gold" ? "border-student/30" : "border-primary/30";
+  const accentBg = tone === "gold" ? "bg-student/15" : "bg-primary/15";
   const accentRing = tone === "gold" ? "ring-gold" : "ring-cyan";
   const grad = tone === "gold" ? "bg-gradient-gold" : "bg-gradient-brand";
 
