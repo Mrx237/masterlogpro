@@ -150,12 +150,9 @@ const Dashboard = () => {
   const tone: "gold" | "cyan" = studentMode ? "gold" : "cyan";
 
   // Streak (consecutive wins from most recent closed trade backwards)
-  const closedSorted = useMemo(
-    () => [...trades]
-      .filter((t) => t.status === "win" || t.status === "loss")
-      .sort((a, b) => new Date(b.trade_at).getTime() - new Date(a.trade_at).getTime()),
-    [trades],
-  );
+  const closedSorted = [...trades]
+    .filter((t) => t.status === "win" || t.status === "loss")
+    .sort((a, b) => new Date(b.trade_at).getTime() - new Date(a.trade_at).getTime());
   let streak = 0; let streakKind: "win" | "loss" | null = null;
   for (const t of closedSorted) {
     if (streakKind === null) { streakKind = t.status as any; streak = 1; }
