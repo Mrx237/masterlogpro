@@ -376,7 +376,7 @@ function HeroStatBand({
         <div>
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
-              <div className={cn("grid h-9 w-9 place-items-center rounded-xl border", `border-${accent}/30`, `bg-${accent}/15`, accentText)}>
+              <div className={cn("grid h-9 w-9 place-items-center rounded-xl border", accentBorder, accentBg, accentText)}>
                 <Wallet className="h-4 w-4" />
               </div>
               <div>
