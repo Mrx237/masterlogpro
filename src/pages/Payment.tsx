@@ -13,7 +13,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Copy, Loader2, Smartphone, ArrowLeft } from "lucide-react";
+import { Copy, Loader2, Smartphone, ArrowLeft, Zap, Bitcoin } from "lucide-react";
 
 const schema = z.object({
   payer_phone: z.string().trim().min(8, "Numéro invalide").max(20),
@@ -36,6 +36,47 @@ const Payment = () => {
   const [method, setMethod] = useState<"mtn" | "orange" | "airtel">("orange");
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [campayPhone, setCampayPhone] = useState("");
+  const [campayLoading, setCampayLoading] = useState(false);
+  const [cryptoLoading, setCryptoLoading] = useState(false);
+  const [campayResult, setCampayResult] = useState<{ ussd_code?: string; reference?: string; operator?: string } | null>(null);
+
+  async function payCampay() {
+    if (!user) return;
+    if (campayPhone.replace(/\D/g, "").length < 9) { toast.error("Numéro invalide"); return; }
+    setCampayLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("campay-initiate", {
+        body: { offer: offerKey, phone: campayPhone },
+      });
+      if (error || !data?.success) throw new Error(data?.error || error?.message || "Échec");
+      setCampayResult({ ussd_code: data.ussd_code, reference: data.reference, operator: data.operator });
+      toast.success("Demande envoyée — valide sur ton téléphone !");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCampayLoading(false);
+    }
+  }
+
+  async function payCrypto() {
+    if (!user) return;
+    setCryptoLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("nowpayments-initiate", {
+        body: {
+          offer: offerKey,
+          success_url: `${window.location.origin}/dashboard?paid=1`,
+          cancel_url: `${window.location.origin}/payment?offer=${offerKey}`,
+        },
+      });
+      if (error || !data?.success) throw new Error(data?.error || error?.message || "Échec");
+      window.location.href = data.invoice_url;
+    } catch (e: any) {
+      toast.error(e.message);
+      setCryptoLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && !user) navigate(`/auth?mode=signup`, { replace: true });
