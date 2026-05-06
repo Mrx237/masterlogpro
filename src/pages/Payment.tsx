@@ -147,6 +147,62 @@ Voici la preuve de paiement.`;
           </div>
         </Card>
 
+        {/* PAIEMENTS AUTOMATIQUES */}
+        <Card className="p-6 mb-6 shadow-card border-2 border-accent/40 bg-accent/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Zap className="h-5 w-5 text-accent" />
+            <h2 className="font-semibold">Paiement automatique — activation instantanée</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Ton compte est activé immédiatement après confirmation, sans intervention manuelle.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Mobile Money via Campay */}
+            <div className="rounded-lg border bg-background p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Smartphone className="h-4 w-4 text-accent" /> Mobile Money (MTN / Orange CM)
+              </div>
+              <Input
+                placeholder="Ton numéro ex: 6XXXXXXXX"
+                value={campayPhone}
+                onChange={(e) => setCampayPhone(e.target.value)}
+              />
+              <Button onClick={payCampay} disabled={campayLoading} className="w-full">
+                {campayLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Payer {formatFCFA(offer.price)}
+              </Button>
+              {campayResult && (
+                <div className="text-xs bg-secondary/60 rounded p-2 space-y-1">
+                  <div>Opérateur : <strong>{campayResult.operator}</strong></div>
+                  {campayResult.ussd_code && <div>Compose : <strong className="font-mono">{campayResult.ussd_code}</strong></div>}
+                  <div className="text-muted-foreground">Réf : {campayResult.reference}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Crypto via NOWPayments */}
+            <div className="rounded-lg border bg-background p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Bitcoin className="h-4 w-4 text-accent" /> Cryptomonnaie (BTC, USDT, ETH...)
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Paiement via NOWPayments. Tu seras redirigé vers la page sécurisée.
+              </p>
+              <Button onClick={payCrypto} disabled={cryptoLoading} variant="outline" className="w-full">
+                {cryptoLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Payer en crypto
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <div className="flex items-center gap-3 my-6">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Ou paiement manuel</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
         <Card className="p-6 mb-6 shadow-card">
           <h2 className="font-semibold mb-3 flex items-center gap-2"><Smartphone className="h-5 w-5 text-accent" /> 1. Effectue le paiement</h2>
           <RadioGroup value={method} onValueChange={(v) => setMethod(v as any)} className="grid sm:grid-cols-3 gap-3 mb-4">
