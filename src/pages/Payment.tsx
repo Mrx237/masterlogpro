@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { z } from "zod";
 import { AppHeader } from "@/components/AppHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { OFFERS, OfferKey, MOBILE_MONEY, formatFCFA } from "@/lib/constants";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { OFFERS, OfferKey, formatFCFA } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Copy, Loader2, Smartphone, ArrowLeft, Zap, Bitcoin } from "lucide-react";
+import { Loader2, Smartphone, ArrowLeft, Zap, Bitcoin } from "lucide-react";
 
 const schema = z.object({
   payer_phone: z.string().trim().min(8, "Numéro invalide").max(20),
