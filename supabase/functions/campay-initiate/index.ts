@@ -113,11 +113,13 @@ Deno.serve(async (req) => {
 
     if (insErr || !pr) return json({ error: insErr?.message }, 500);
 
+    const collectAmount = environment === "demo" ? Math.min(amount, 25) : amount;
+
     const cpRes = await fetch(`${host}/api/collect/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Token ${token}` },
       body: JSON.stringify({
-        amount: String(amount),
+        amount: String(collectAmount),
         currency: "XAF",
         from: normalized,
         description: `MasterLogPro - ${offer}`,
@@ -130,7 +132,7 @@ Deno.serve(async (req) => {
       await admin.from("payment_requests").update({
         status: "rejected",
         provider_status: cpData?.message || "campay_error",
-        metadata: { ...cpData, campay_environment: environment },
+        metadata: { ...cpData, campay_environment: environment, campay_collect_amount: collectAmount },
       }).eq("id", pr.id);
       return json({ error: cpData?.message || "Campay échec" }, 400);
     }
@@ -140,7 +142,7 @@ Deno.serve(async (req) => {
       provider_tx_id: cpData.reference,
       provider_status: "PENDING",
       method: cpData.operator?.toLowerCase()?.includes("orange") ? "orange" : "mtn",
-      metadata: { ...cpData, campay_environment: environment },
+      metadata: { ...cpData, campay_environment: environment, campay_collect_amount: collectAmount },
     }).eq("id", pr.id);
 
     return json({
@@ -150,6 +152,7 @@ Deno.serve(async (req) => {
       ussd_code: cpData.ussd_code,
       operator: cpData.operator,
       environment,
+      test_amount: environment === "demo" ? collectAmount : undefined,
       message: "Compose le code USSD ou valide la notification sur ton téléphone.",
     });
   } catch (e) {
