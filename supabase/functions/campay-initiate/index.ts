@@ -14,7 +14,7 @@ const OFFER_FCFA: Record<string, number> = {
   sub_12m: 80000,
 };
 
-const CAMPAY_BASE = "https://www.campay.net/api";
+const CAMPAY_HOSTS = ["https://www.campay.net", "https://demo.campay.net"];
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -23,18 +23,43 @@ function json(body: unknown, status = 200) {
   });
 }
 
-async function getCampayToken(): Promise<string> {
+async function safeJson(res: Response) {
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
+async function getCampayToken(): Promise<{ token: string; host: string; environment: "prod" | "demo" }> {
   const username = Deno.env.get("CAMPAY_USERNAME");
   const password = Deno.env.get("CAMPAY_PASSWORD");
   if (!username || !password) throw new Error("Campay credentials missing");
-  const res = await fetch(`${CAMPAY_BASE}/token/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  const data = await res.json();
-  if (!res.ok || !data.token) throw new Error(`Campay auth failed: ${JSON.stringify(data)}`);
-  return data.token;
+
+  const preferred = (Deno.env.get("CAMPAY_ENV") || "prod").toLowerCase();
+  const hosts = preferred === "demo" ? [...CAMPAY_HOSTS].reverse() : CAMPAY_HOSTS;
+  const errors: string[] = [];
+
+  for (const host of hosts) {
+    try {
+      const res = await fetch(`${host}/api/token/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await safeJson(res);
+      if (res.ok && data.token) {
+        return { token: data.token, host, environment: host.includes("demo") ? "demo" : "prod" };
+      }
+      errors.push(`${host}: ${JSON.stringify(data)}`);
+    } catch (error) {
+      errors.push(`${host}: ${(error as Error).message}`);
+    }
+  }
+
+  throw new Error(`Campay auth failed. Vérifie l'App username/App password et l'environnement Campay. Détails: ${errors.join(" | ")}`);
 }
 
 Deno.serve(async (req) => {
@@ -63,6 +88,8 @@ Deno.serve(async (req) => {
     if (!normalized.startsWith("237")) normalized = "237" + normalized.replace(/^0+/, "");
     if (normalized.length !== 12) return json({ error: "Numéro invalide (format 6XXXXXXXX)" }, 400);
 
+    const { token, host, environment } = await getCampayToken();
+
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -86,26 +113,26 @@ Deno.serve(async (req) => {
 
     if (insErr || !pr) return json({ error: insErr?.message }, 500);
 
-    const token = await getCampayToken();
+    const collectAmount = environment === "demo" ? Math.min(amount, 25) : amount;
 
-    const cpRes = await fetch(`${CAMPAY_BASE}/collect/`, {
+    const cpRes = await fetch(`${host}/api/collect/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Token ${token}` },
       body: JSON.stringify({
-        amount: String(amount),
+        amount: String(collectAmount),
         currency: "XAF",
         from: normalized,
         description: `MasterLogPro - ${offer}`,
         external_reference: pr.id,
       }),
     });
-    const cpData = await cpRes.json();
+    const cpData = await safeJson(cpRes);
 
     if (!cpRes.ok || !cpData.reference) {
       await admin.from("payment_requests").update({
         status: "rejected",
         provider_status: cpData?.message || "campay_error",
-        metadata: cpData,
+        metadata: { ...cpData, campay_environment: environment, campay_collect_amount: collectAmount },
       }).eq("id", pr.id);
       return json({ error: cpData?.message || "Campay échec" }, 400);
     }
@@ -115,7 +142,7 @@ Deno.serve(async (req) => {
       provider_tx_id: cpData.reference,
       provider_status: "PENDING",
       method: cpData.operator?.toLowerCase()?.includes("orange") ? "orange" : "mtn",
-      metadata: cpData,
+      metadata: { ...cpData, campay_environment: environment, campay_collect_amount: collectAmount },
     }).eq("id", pr.id);
 
     return json({
@@ -124,6 +151,8 @@ Deno.serve(async (req) => {
       reference: cpData.reference,
       ussd_code: cpData.ussd_code,
       operator: cpData.operator,
+      environment,
+      test_amount: environment === "demo" ? collectAmount : undefined,
       message: "Compose le code USSD ou valide la notification sur ton téléphone.",
     });
   } catch (e) {

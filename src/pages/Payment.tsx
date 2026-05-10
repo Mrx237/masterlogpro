@@ -20,6 +20,7 @@ const Payment = () => {
   const [campayLoading, setCampayLoading] = useState(false);
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [campayResult, setCampayResult] = useState<{ ussd_code?: string; reference?: string; operator?: string } | null>(null);
+  const [cryptoInvoiceUrl, setCryptoInvoiceUrl] = useState<string | null>(null);
 
   async function payCampay() {
     if (!user) return;
@@ -51,7 +52,10 @@ const Payment = () => {
         },
       });
       if (error || !data?.success) throw new Error(data?.error || error?.message || "Échec");
-      window.location.href = data.invoice_url;
+      if (!data.invoice_url) throw new Error("Lien NOWPayments indisponible");
+      setCryptoInvoiceUrl(data.invoice_url);
+      toast.success("Facture crypto créée — redirection en cours...");
+      window.location.assign(data.invoice_url);
     } catch (e: any) {
       toast.error(e.message);
       setCryptoLoading(false);
@@ -125,6 +129,16 @@ const Payment = () => {
                 {cryptoLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 Payer en crypto
               </Button>
+              {cryptoInvoiceUrl && (
+                <a
+                  href={cryptoInvoiceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-xs text-accent underline underline-offset-4"
+                >
+                  Ouvrir la facture NOWPayments
+                </a>
+              )}
             </div>
           </div>
         </Card>
