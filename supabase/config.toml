@@ -8,6 +8,3 @@ verify_jwt = false
 
 [functions.nowpayments-webhook]
 verify_jwt = false
-
-[functions.campay-webhook]
-verify_jwt = false
