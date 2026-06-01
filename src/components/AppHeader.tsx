@@ -53,6 +53,7 @@ export function AppHeader() {
               {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls}>Exercices</NavLink>}
               {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls}>Analyse</NavLink>}
               {!isStudent && !isAdmin && <NavLink to="/subscribe" className={linkCls}>Offres</NavLink>}
+              <NavLink to="/affiliate" className={linkCls}>Affilié</NavLink>
               {isAdmin && (
                 <NavLink
                   to="/admin"
@@ -117,6 +118,7 @@ export function AppHeader() {
                 {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls} onClick={() => setOpen(false)}>Exercices</NavLink>}
                 {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls} onClick={() => setOpen(false)}>Analyse</NavLink>}
                 {!isStudent && !isAdmin && <NavLink to="/subscribe" className={linkCls} onClick={() => setOpen(false)}>Offres</NavLink>}
+                <NavLink to="/affiliate" className={linkCls} onClick={() => setOpen(false)}>Affilié</NavLink>
                 <NavLink to="/profile" className={linkCls} onClick={() => setOpen(false)}>Profil</NavLink>
                 {isAdmin && (
                   <NavLink to="/admin" className="px-3.5 py-2 text-[13px] font-medium text-accent" onClick={() => setOpen(false)}>

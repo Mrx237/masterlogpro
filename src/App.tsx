@@ -21,6 +21,7 @@ import Calculator from "./pages/Calculator.tsx";
 import Profile from "./pages/Profile.tsx";
 import Admin from "./pages/Admin.tsx";
 import Leaderboard from "./pages/Leaderboard.tsx";
+import Affiliate from "./pages/Affiliate.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/calculateur" element={<ProtectedRoute><Calculator /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/affiliate" element={<ProtectedRoute><Affiliate /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

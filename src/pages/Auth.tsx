@@ -29,10 +29,15 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Capture & persist referral code from ?ref=CODE
+    const ref = params.get("ref");
+    if (ref) {
+      try { localStorage.setItem("mlp_ref", ref.trim().toUpperCase()); } catch {}
+    }
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate("/dashboard", { replace: true });
     });
-  }, [navigate]);
+  }, [navigate, params]);
 
   async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,14 +49,20 @@ const Auth = () => {
     if (!country) { toast.error("Pays invalide"); return; }
 
     setLoading(true);
+    let referralCode: string | null = null;
+    try { referralCode = localStorage.getItem("mlp_ref"); } catch {}
     const { data: signupData, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name: parsed.data.full_name },
+        data: {
+          full_name: parsed.data.full_name,
+          ...(referralCode ? { referral_code: referralCode } : {}),
+        },
       },
     });
+    if (!error) { try { localStorage.removeItem("mlp_ref"); } catch {} }
 
     if (error) { setLoading(false); toast.error(error.message); return; }
 

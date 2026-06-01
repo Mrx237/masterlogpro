@@ -14,6 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_commissions: {
+        Row: {
+          affiliate_user_id: string
+          amount_fcfa: number
+          created_at: string
+          id: string
+          payment_request_id: string
+          referred_user_id: string
+          status: Database["public"]["Enums"]["commission_status"]
+        }
+        Insert: {
+          affiliate_user_id: string
+          amount_fcfa: number
+          created_at?: string
+          id?: string
+          payment_request_id: string
+          referred_user_id: string
+          status?: Database["public"]["Enums"]["commission_status"]
+        }
+        Update: {
+          affiliate_user_id?: string
+          amount_fcfa?: number
+          created_at?: string
+          id?: string
+          payment_request_id?: string
+          referred_user_id?: string
+          status?: Database["public"]["Enums"]["commission_status"]
+        }
+        Relationships: []
+      }
+      affiliate_payouts: {
+        Row: {
+          admin_note: string | null
+          affiliate_user_id: string
+          amount_fcfa: number
+          id: string
+          method: Database["public"]["Enums"]["payout_method"]
+          phone: string | null
+          processed_at: string | null
+          requested_at: string
+          status: Database["public"]["Enums"]["payout_status"]
+        }
+        Insert: {
+          admin_note?: string | null
+          affiliate_user_id: string
+          amount_fcfa: number
+          id?: string
+          method: Database["public"]["Enums"]["payout_method"]
+          phone?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["payout_status"]
+        }
+        Update: {
+          admin_note?: string | null
+          affiliate_user_id?: string
+          amount_fcfa?: number
+          id?: string
+          method?: Database["public"]["Enums"]["payout_method"]
+          phone?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["payout_status"]
+        }
+        Relationships: []
+      }
+      affiliate_referrals: {
+        Row: {
+          affiliate_user_id: string
+          created_at: string
+          id: string
+          referred_user_id: string
+        }
+        Insert: {
+          affiliate_user_id: string
+          created_at?: string
+          id?: string
+          referred_user_id: string
+        }
+        Update: {
+          affiliate_user_id?: string
+          created_at?: string
+          id?: string
+          referred_user_id?: string
+        }
+        Relationships: []
+      }
+      affiliates: {
+        Row: {
+          balance_fcfa: number
+          code: string
+          created_at: string
+          id: string
+          total_earned_fcfa: number
+          total_paid_fcfa: number
+          user_id: string
+        }
+        Insert: {
+          balance_fcfa?: number
+          code: string
+          created_at?: string
+          id?: string
+          total_earned_fcfa?: number
+          total_paid_fcfa?: number
+          user_id: string
+        }
+        Update: {
+          balance_fcfa?: number
+          code?: string
+          created_at?: string
+          id?: string
+          total_earned_fcfa?: number
+          total_paid_fcfa?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       economic_news: {
         Row: {
           actual: string | null
@@ -540,6 +657,7 @@ export type Database = {
         Args: { _season: string; _user_id: string }
         Returns: undefined
       }
+      gen_affiliate_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -553,6 +671,7 @@ export type Database = {
     Enums: {
       account_status: "pending" | "active" | "expired"
       app_role: "admin" | "student" | "subscriber"
+      commission_status: "pending" | "approved" | "paid" | "cancelled"
       error_tag: "bad_timing" | "overtrading" | "bad_analysis" | "none"
       exercise_level: "debutant" | "intermediaire" | "avance"
       news_impact: "high" | "medium" | "low" | "none"
@@ -561,6 +680,8 @@ export type Database = {
       offer_type: "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m"
       payment_method: "mtn" | "orange" | "airtel" | "crypto" | "card"
       payment_status: "pending" | "approved" | "rejected"
+      payout_method: "momo" | "credit"
+      payout_status: "requested" | "paid" | "rejected"
       sentiment: "bullish" | "bearish" | "neutral"
       submission_status: "pending" | "submitted" | "graded"
       trade_direction: "buy" | "sell"
@@ -694,6 +815,7 @@ export const Constants = {
     Enums: {
       account_status: ["pending", "active", "expired"],
       app_role: ["admin", "student", "subscriber"],
+      commission_status: ["pending", "approved", "paid", "cancelled"],
       error_tag: ["bad_timing", "overtrading", "bad_analysis", "none"],
       exercise_level: ["debutant", "intermediaire", "avance"],
       news_impact: ["high", "medium", "low", "none"],
@@ -702,6 +824,8 @@ export const Constants = {
       offer_type: ["formation", "sub_1m", "sub_3m", "sub_6m", "sub_12m"],
       payment_method: ["mtn", "orange", "airtel", "crypto", "card"],
       payment_status: ["pending", "approved", "rejected"],
+      payout_method: ["momo", "credit"],
+      payout_status: ["requested", "paid", "rejected"],
       sentiment: ["bullish", "bearish", "neutral"],
       submission_status: ["pending", "submitted", "graded"],
       trade_direction: ["buy", "sell"],

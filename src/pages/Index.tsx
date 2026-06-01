@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppHeader } from "@/components/AppHeader";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -10,6 +11,12 @@ import {
 } from "lucide-react";
 
 const Index = () => {
+  const [params] = useSearchParams();
+  useEffect(() => {
+    const ref = params.get("ref");
+    if (ref) { try { localStorage.setItem("mlp_ref", ref.trim().toUpperCase()); } catch {} }
+  }, [params]);
+
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden noise">
       <AppHeader />
