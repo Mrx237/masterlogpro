@@ -39,6 +39,7 @@ interface UserRow {
 }
 
 import { ExercisesAdminTab, AnalysesAdminTab, NewsAdminTab } from "@/components/admin/AdminTabs";
+import { AffiliatesAdminTab } from "@/components/admin/AffiliatesAdminTab";
 
 const Admin = () => {
   return (
@@ -57,6 +58,7 @@ const Admin = () => {
               <TabsList className="glass inline-flex w-auto min-w-max">
                 <TabsTrigger value="users" className="text-xs md:text-sm whitespace-nowrap">👥 Utilisateurs</TabsTrigger>
                 <TabsTrigger value="payments" className="text-xs md:text-sm whitespace-nowrap">💳 Paiements</TabsTrigger>
+                <TabsTrigger value="affiliates" className="text-xs md:text-sm whitespace-nowrap">🎁 Affiliés</TabsTrigger>
                 <TabsTrigger value="exercises" className="text-xs md:text-sm whitespace-nowrap">📚 Exercices</TabsTrigger>
                 <TabsTrigger value="analyses" className="text-xs md:text-sm whitespace-nowrap">📊 Analyses</TabsTrigger>
                 <TabsTrigger value="news" className="text-xs md:text-sm whitespace-nowrap">📰 News</TabsTrigger>
@@ -66,6 +68,7 @@ const Admin = () => {
 
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
           <TabsContent value="payments" className="mt-4"><PaymentsTab /></TabsContent>
+          <TabsContent value="affiliates" className="mt-4"><AffiliatesAdminTab /></TabsContent>
           <TabsContent value="exercises" className="mt-4"><ExercisesAdminTab /></TabsContent>
           <TabsContent value="analyses" className="mt-4"><AnalysesAdminTab /></TabsContent>
           <TabsContent value="news" className="mt-4"><NewsAdminTab /></TabsContent>
