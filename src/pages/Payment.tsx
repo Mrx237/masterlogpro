@@ -9,7 +9,7 @@ import { OFFERS, OfferKey, formatFCFA, MOBILE_MONEY, buildWhatsAppLink } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, Smartphone, ArrowLeft, Bitcoin, Copy, CheckCircle2, MessageCircle } from "lucide-react";
+import { Loader2, Smartphone, ArrowLeft, Bitcoin, Copy, CheckCircle2, MessageCircle, Wallet } from "lucide-react";
 
 const Payment = () => {
   const [params] = useSearchParams();
