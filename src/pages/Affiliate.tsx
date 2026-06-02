@@ -27,7 +27,8 @@ interface Referral { referred_user_id: string; created_at: string; profiles?: { 
 interface Commission { id: string; amount_fcfa: number; status: string; created_at: string; referred_user_id: string }
 interface Payout { id: string; amount_fcfa: number; method: string; phone: string | null; status: string; requested_at: string; processed_at: string | null; admin_note: string | null }
 
-const MIN_PAYOUT = 5000;
+const MIN_PAYOUT = 1000;
+const COMMISSION_FCFA = 1000;
 
 export default function Affiliate() {
   const { user, loading: authLoading } = useAuth();
