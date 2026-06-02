@@ -27,9 +27,25 @@ const Payment = () => {
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [cryptoInvoiceUrl, setCryptoInvoiceUrl] = useState<string | null>(null);
 
+  const [credit, setCredit] = useState<number>(0);
+  const [creditLoading, setCreditLoading] = useState(false);
+  const [payingCredit, setPayingCredit] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) navigate(`/auth?mode=signup`, { replace: true });
   }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("affiliates")
+        .select("balance_fcfa")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setCredit(data?.balance_fcfa ?? 0);
+    })();
+  }, [user, submitted]);
 
   if (!offer) return null;
 
