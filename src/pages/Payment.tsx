@@ -113,6 +113,25 @@ const Payment = () => {
     }
   }
 
+  async function payWithCredit() {
+    if (!user) return;
+    if (credit < offer.price) { toast.error("Crédit insuffisant"); return; }
+    setPayingCredit(true);
+    try {
+      const { error } = await supabase.rpc("pay_with_affiliate_credit", {
+        _offer: offerKey as any,
+        _amount_fcfa: offer.price,
+      });
+      if (error) throw error;
+      toast.success("Paiement réussi avec ton crédit affilié 🎉");
+      navigate("/dashboard?paid=1");
+    } catch (e: any) {
+      toast.error(e.message || "Échec du paiement par crédit");
+    } finally {
+      setPayingCredit(false);
+    }
+  }
+
   const waMessage = submitted
     ? `Bonjour, je viens d'envoyer ${formatFCFA(offer.price)} via ${operator.toUpperCase()} Mobile Money pour l'offre "${offer.label}". ID transaction: ${txRef}. Mon numéro: ${payerPhone}. Réf demande: ${submitted.id}`
     : "";
