@@ -106,11 +106,11 @@ export default function Affiliate() {
             <Gift className="h-3 w-3" /> Programme affilié
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">
-            Recommande, <span className="text-gradient-brand">gagne 20%</span>
+            Recommande, <span className="text-gradient-brand">gagne 1 000 FCFA</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-            Tu gagnes <strong className="text-foreground">20%</strong> sur chaque paiement validé d'un filleul.
-            Retrait à partir de <strong className="text-foreground">{formatFCFA(MIN_PAYOUT)}</strong> en Mobile Money ou crédit interne.
+            Tu gagnes <strong className="text-foreground">{formatFCFA(COMMISSION_FCFA)}</strong> sur chaque paiement validé d'un filleul.
+            Retrait dès <strong className="text-foreground">{formatFCFA(MIN_PAYOUT)}</strong> en Mobile Money ou crédit interne.
           </p>
         </div>
 
