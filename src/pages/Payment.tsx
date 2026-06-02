@@ -154,6 +154,32 @@ const Payment = () => {
           </div>
         </Card>
 
+        {/* AFFILIATE CREDIT */}
+        {credit > 0 && (
+          <Card className="p-6 mb-6 shadow-card border-2 border-primary/40 bg-primary/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              <h2 className="font-semibold">Payer avec mon crédit affilié</h2>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Tu as <strong className="text-foreground">{formatFCFA(credit)}</strong> de crédit disponible.
+              {credit >= offer.price
+                ? " Activation instantanée, sans aucune vérification."
+                : ` Il te manque ${formatFCFA(offer.price - credit)} pour couvrir cette offre.`}
+            </p>
+            <Button
+              onClick={payWithCredit}
+              disabled={payingCredit || credit < offer.price}
+              className="w-full"
+            >
+              {payingCredit && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Utiliser {formatFCFA(offer.price)} de mon crédit
+            </Button>
+          </Card>
+        )}
+
+
+
         {/* MOBILE MONEY MANUEL */}
         <Card className="p-6 mb-6 shadow-card border-2 border-accent/40 bg-accent/5">
           <div className="flex items-center gap-2 mb-3">
