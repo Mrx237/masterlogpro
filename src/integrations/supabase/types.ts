@@ -666,6 +666,13 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      pay_with_affiliate_credit: {
+        Args: {
+          _amount_fcfa: number
+          _offer: Database["public"]["Enums"]["offer_type"]
+        }
+        Returns: string
+      }
       refresh_leaderboard: { Args: never; Returns: Json }
     }
     Enums: {

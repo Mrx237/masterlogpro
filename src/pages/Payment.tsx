@@ -9,7 +9,7 @@ import { OFFERS, OfferKey, formatFCFA, MOBILE_MONEY, buildWhatsAppLink } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, Smartphone, ArrowLeft, Bitcoin, Copy, CheckCircle2, MessageCircle } from "lucide-react";
+import { Loader2, Smartphone, ArrowLeft, Bitcoin, Copy, CheckCircle2, MessageCircle, Wallet } from "lucide-react";
 
 const Payment = () => {
   const [params] = useSearchParams();
@@ -27,9 +27,25 @@ const Payment = () => {
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [cryptoInvoiceUrl, setCryptoInvoiceUrl] = useState<string | null>(null);
 
+  const [credit, setCredit] = useState<number>(0);
+  const [creditLoading, setCreditLoading] = useState(false);
+  const [payingCredit, setPayingCredit] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) navigate(`/auth?mode=signup`, { replace: true });
   }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("affiliates")
+        .select("balance_fcfa")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setCredit(data?.balance_fcfa ?? 0);
+    })();
+  }, [user, submitted]);
 
   if (!offer) return null;
 
@@ -97,6 +113,25 @@ const Payment = () => {
     }
   }
 
+  async function payWithCredit() {
+    if (!user) return;
+    if (credit < offer.price) { toast.error("Crédit insuffisant"); return; }
+    setPayingCredit(true);
+    try {
+      const { error } = await supabase.rpc("pay_with_affiliate_credit", {
+        _offer: offerKey as any,
+        _amount_fcfa: offer.price,
+      });
+      if (error) throw error;
+      toast.success("Paiement réussi avec ton crédit affilié 🎉");
+      navigate("/dashboard?paid=1");
+    } catch (e: any) {
+      toast.error(e.message || "Échec du paiement par crédit");
+    } finally {
+      setPayingCredit(false);
+    }
+  }
+
   const waMessage = submitted
     ? `Bonjour, je viens d'envoyer ${formatFCFA(offer.price)} via ${operator.toUpperCase()} Mobile Money pour l'offre "${offer.label}". ID transaction: ${txRef}. Mon numéro: ${payerPhone}. Réf demande: ${submitted.id}`
     : "";
@@ -118,6 +153,32 @@ const Payment = () => {
             <div className="text-3xl font-bold text-accent">{formatFCFA(offer.price)}</div>
           </div>
         </Card>
+
+        {/* AFFILIATE CREDIT */}
+        {credit > 0 && (
+          <Card className="p-6 mb-6 shadow-card border-2 border-primary/40 bg-primary/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              <h2 className="font-semibold">Payer avec mon crédit affilié</h2>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Tu as <strong className="text-foreground">{formatFCFA(credit)}</strong> de crédit disponible.
+              {credit >= offer.price
+                ? " Activation instantanée, sans aucune vérification."
+                : ` Il te manque ${formatFCFA(offer.price - credit)} pour couvrir cette offre.`}
+            </p>
+            <Button
+              onClick={payWithCredit}
+              disabled={payingCredit || credit < offer.price}
+              className="w-full"
+            >
+              {payingCredit && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Utiliser {formatFCFA(offer.price)} de mon crédit
+            </Button>
+          </Card>
+        )}
+
+
 
         {/* MOBILE MONEY MANUEL */}
         <Card className="p-6 mb-6 shadow-card border-2 border-accent/40 bg-accent/5">
