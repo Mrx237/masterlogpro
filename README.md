@@ -1,3 +1,2 @@
-# Welcome to your Lovable project
+# project masterlopro
 
-TODO: Document your project here
