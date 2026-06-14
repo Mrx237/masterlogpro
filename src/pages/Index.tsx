@@ -3,6 +3,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppHeader } from "@/components/AppHeader";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { Testimonials } from "@/components/landing/Testimonials";
+import { Guarantees } from "@/components/landing/Guarantees";
+import { FAQ } from "@/components/landing/FAQ";
 import { OFFERS, formatFCFA } from "@/lib/constants";
 import {
   ArrowRight, ArrowUpRight, BarChart3, Brain, CheckCircle2, GraduationCap,
