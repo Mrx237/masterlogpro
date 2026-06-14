@@ -56,7 +56,7 @@ export function FAQ() {
       </div>
 
       <div className="max-w-3xl mx-auto space-y-3">
-        {FAQ.map((item, i) => {
+        {ITEMS.map((item, i) => {
           const isOpen = open === i;
           return (
             <div
