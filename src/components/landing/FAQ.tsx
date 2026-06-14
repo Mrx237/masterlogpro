@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const FAQ = [
+const ITEMS = [
   {
     q: "Je débute. La formation est-elle vraiment adaptée ?",
     a: "Oui. La formation part de zéro : vocabulaire, lecture de chandeliers, gestion du risque, psychologie, plan de trading. Chaque module est suivi d'exercices corrigés par le coach. Tu progresses à ton rythme.",
