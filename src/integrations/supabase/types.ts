@@ -277,6 +277,110 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_likes: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      forum_replies: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          like_count: number
+          topic_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          topic_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          topic_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_replies_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_topics: {
+        Row: {
+          category: Database["public"]["Enums"]["forum_category"]
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          last_activity_at: string
+          like_count: number
+          reply_count: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["forum_category"]
+          content: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          last_activity_at?: string
+          like_count?: number
+          reply_count?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["forum_category"]
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          last_activity_at?: string
+          like_count?: number
+          reply_count?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           admin_note: string | null
@@ -681,6 +785,12 @@ export type Database = {
       commission_status: "pending" | "approved" | "paid" | "cancelled"
       error_tag: "bad_timing" | "overtrading" | "bad_analysis" | "none"
       exercise_level: "debutant" | "intermediaire" | "avance"
+      forum_category:
+        | "analyse"
+        | "strategie"
+        | "psychologie"
+        | "question"
+        | "general"
       news_impact: "high" | "medium" | "low" | "none"
       news_impact_level: "high" | "medium" | "low"
       news_sentiment: "bullish" | "bearish" | "neutral"
@@ -825,6 +935,13 @@ export const Constants = {
       commission_status: ["pending", "approved", "paid", "cancelled"],
       error_tag: ["bad_timing", "overtrading", "bad_analysis", "none"],
       exercise_level: ["debutant", "intermediaire", "avance"],
+      forum_category: [
+        "analyse",
+        "strategie",
+        "psychologie",
+        "question",
+        "general",
+      ],
       news_impact: ["high", "medium", "low", "none"],
       news_impact_level: ["high", "medium", "low"],
       news_sentiment: ["bullish", "bearish", "neutral"],
