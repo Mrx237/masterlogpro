@@ -49,6 +49,7 @@ export function AppHeader() {
               <NavLink to="/trades" className={linkCls}>Mes trades</NavLink>
               <NavLink to="/news" className={linkCls}>News</NavLink>
               <NavLink to="/leaderboard" className={linkCls}>Classement</NavLink>
+              <NavLink to="/forum" className={linkCls}>Forum</NavLink>
               <NavLink to="/calculateur" className={linkCls}>Calculateur</NavLink>
               {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls}>Exercices</NavLink>}
               {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls}>Analyse</NavLink>}
