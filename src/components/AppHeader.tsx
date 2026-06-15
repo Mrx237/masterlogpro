@@ -115,6 +115,7 @@ export function AppHeader() {
                 <NavLink to="/trades" className={linkCls} onClick={() => setOpen(false)}>Mes trades</NavLink>
                 <NavLink to="/news" className={linkCls} onClick={() => setOpen(false)}>News</NavLink>
                 <NavLink to="/leaderboard" className={linkCls} onClick={() => setOpen(false)}>Classement</NavLink>
+                <NavLink to="/forum" className={linkCls} onClick={() => setOpen(false)}>Forum</NavLink>
                 <NavLink to="/calculateur" className={linkCls} onClick={() => setOpen(false)}>Calculateur</NavLink>
                 {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls} onClick={() => setOpen(false)}>Exercices</NavLink>}
                 {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls} onClick={() => setOpen(false)}>Analyse</NavLink>}
