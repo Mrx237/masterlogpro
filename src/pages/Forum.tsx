@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,7 +6,6 @@ import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -16,9 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  MessageSquare, Heart, Pin, Plus, ArrowLeft, Loader2, Send, Trash2, Search, Sparkles,
+  MessageSquare, Heart, Pin, Plus, ArrowLeft, Loader2, Send, Trash2, Search, Sparkles, Hash,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { fr } from "date-fns/locale";
 
 type Category = "analyse" | "strategie" | "psychologie" | "question" | "general";
@@ -65,9 +64,20 @@ function initials(name?: string | null, email?: string | null) {
   return src.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "?";
 }
 
-function Avatar({ name, email }: { name?: string | null; email?: string | null }) {
+function colorFromId(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const hue = h % 360;
+  return `hsl(${hue} 70% 45%)`;
+}
+
+function Avatar({ name, email, userId, size = 36 }: { name?: string | null; email?: string | null; userId?: string; size?: number }) {
+  const bg = userId ? colorFromId(userId) : undefined;
   return (
-    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-brand text-primary-foreground font-bold text-xs">
+    <div
+      className="grid shrink-0 place-items-center rounded-full text-white font-bold"
+      style={{ width: size, height: size, fontSize: size * 0.36, background: bg || "linear-gradient(135deg,hsl(var(--primary)),hsl(var(--accent)))" }}
+    >
       {initials(name, email)}
     </div>
   );
@@ -82,7 +92,14 @@ function CategoryBadge({ category }: { category: string }) {
   );
 }
 
-/* ---------------------------- LIST VIEW ---------------------------- */
+function smartDate(d: string) {
+  const date = new Date(d);
+  if (isToday(date)) return format(date, "HH:mm");
+  if (isYesterday(date)) return "Hier " + format(date, "HH:mm");
+  return format(date, "d MMM HH:mm", { locale: fr });
+}
+
+/* ---------------------------- LIST VIEW (Conversations) ---------------------------- */
 function ForumList() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -104,39 +121,29 @@ function ForumList() {
       .limit(100);
     if (filter !== "all") query = query.eq("category", filter);
     const { data, error } = await query;
-    if (error) {
-      toast.error("Impossible de charger les sujets");
-      setLoading(false);
-      return;
-    }
+    if (error) { toast.error("Impossible de charger les discussions"); setLoading(false); return; }
     const list = (data ?? []) as Topic[];
     const ids = Array.from(new Set(list.map((t) => t.user_id)));
-    let authors: Record<string, { full_name: string | null; email: string | null }> = {};
+    let authors: Record<string, any> = {};
     if (ids.length) {
-      const { data: profs } = await db
-        .from("profiles")
-        .select("id, full_name, email")
-        .in("id", ids);
+      const { data: profs } = await db.from("profiles").select("id, full_name, email").in("id", ids);
       authors = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
     }
-    let myLikes = new Set<string>();
-    if (user) {
-      const { data: likes } = await db
-        .from("forum_likes")
-        .select("target_id")
-        .eq("user_id", user.id)
-        .eq("target_type", "topic")
-        .in("target_id", list.map((t) => t.id));
-      myLikes = new Set((likes ?? []).map((l: any) => l.target_id));
-    }
-    setTopics(list.map((t) => ({ ...t, author: authors[t.user_id] ?? null, liked_by_me: myLikes.has(t.id) })));
+    setTopics(list.map((t) => ({ ...t, author: authors[t.user_id] ?? null })));
     setLoading(false);
   }
 
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter]);
+
+  // Realtime: bump list on new topic / activity
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, user?.id]);
+    const ch = supabase
+      .channel("forum_topics_list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "forum_topics" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line
+  }, [filter]);
 
   const filtered = useMemo(() => {
     if (!q.trim()) return topics;
@@ -145,198 +152,176 @@ function ForumList() {
   }, [topics, q]);
 
   async function createTopic() {
-    if (!user) {
-      toast.error("Connecte-toi pour publier");
-      navigate("/auth");
-      return;
-    }
+    if (!user) { toast.error("Connecte-toi pour publier"); navigate("/auth"); return; }
     const title = form.title.trim();
     const content = form.content.trim();
-    if (title.length < 5) return toast.error("Titre trop court (5 caractères min)");
-    if (content.length < 10) return toast.error("Contenu trop court (10 caractères min)");
+    if (title.length < 3) return toast.error("Titre trop court");
+    if (content.length < 1) return toast.error("Écris un premier message");
     setSubmitting(true);
     const { data, error } = await db.from("forum_topics").insert({
       user_id: user.id, title, content, category: form.category,
     }).select("id").single();
     setSubmitting(false);
     if (error) return toast.error(error.message);
-    toast.success("Sujet publié");
+    toast.success("Discussion créée");
     setOpen(false);
     setForm({ title: "", content: "", category: "general" });
     navigate(`/forum/${data.id}`);
   }
 
-  async function toggleLike(t: Topic) {
-    if (!user) { toast.error("Connecte-toi pour liker"); return; }
-    if (t.liked_by_me) {
-      await db.from("forum_likes").delete()
-        .eq("user_id", user.id).eq("target_type", "topic").eq("target_id", t.id);
-    } else {
-      await db.from("forum_likes").insert({ user_id: user.id, target_type: "topic", target_id: t.id });
-    }
-    setTopics((prev) => prev.map((x) => x.id === t.id
-      ? { ...x, liked_by_me: !t.liked_by_me, like_count: x.like_count + (t.liked_by_me ? -1 : 1) }
-      : x));
-  }
-
-  async function deleteTopic(t: Topic) {
-    if (!confirm("Supprimer ce sujet ?")) return;
+  async function deleteTopic(t: Topic, e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!confirm("Supprimer cette discussion ?")) return;
     const { error } = await db.from("forum_topics").delete().eq("id", t.id);
     if (error) return toast.error(error.message);
-    toast.success("Supprimé");
     setTopics((p) => p.filter((x) => x.id !== t.id));
   }
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="container py-8 md:py-12">
-        {/* Hero */}
-        <div className="relative overflow-hidden rounded-2xl glass-strong p-6 md:p-10 mb-8">
+      <main className="container py-6 md:py-10 max-w-5xl">
+        {/* Hero compact */}
+        <div className="relative overflow-hidden rounded-2xl glass-strong p-5 md:p-7 mb-6">
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-brand opacity-20 blur-3xl" />
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-primary mb-3">
-              <Sparkles className="h-3.5 w-3.5" /> Communauté
-            </div>
-            <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
-              Forum <span className="text-gradient-brand">des traders</span>
-            </h1>
-            <p className="mt-3 text-muted-foreground max-w-2xl">
-              Partagez vos analyses, vos setups, vos erreurs et apprenez ensemble.
-              Une communauté constructive, sans bruit, centrée sur la progression.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="bg-gradient-brand text-primary-foreground hover:opacity-90 border-0">
-                    <Plus className="h-4 w-4" /> Nouveau sujet
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-xl">
-                  <DialogHeader>
-                    <DialogTitle>Créer un sujet</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-2">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block uppercase tracking-wider">Catégorie</label>
-                      <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as Category })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block uppercase tracking-wider">Titre</label>
-                      <Input
-                        placeholder="Ex: Comment lire le contexte avant un NFP ?"
-                        value={form.title}
-                        onChange={(e) => setForm({ ...form, title: e.target.value })}
-                        maxLength={160}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block uppercase tracking-wider">Contenu</label>
-                      <Textarea
-                        placeholder="Partage ton analyse, ta question, ton retour d'expérience..."
-                        value={form.content}
-                        onChange={(e) => setForm({ ...form, content: e.target.value })}
-                        rows={8}
-                        maxLength={8000}
-                      />
-                      <div className="text-xs text-muted-foreground mt-1">{form.content.length}/8000</div>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
-                    <Button onClick={createTopic} disabled={submitting} className="bg-gradient-brand text-primary-foreground border-0">
-                      {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      Publier
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Rechercher un sujet..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+          <div className="relative flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-primary mb-2">
+                <Sparkles className="h-3.5 w-3.5" /> Chat communautaire
               </div>
+              <h1 className="font-display text-2xl md:text-4xl font-bold leading-tight">
+                Discussions <span className="text-gradient-brand">traders</span>
+              </h1>
+              <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
+                Rejoins une conversation, partage ton setup, pose tes questions — en direct.
+              </p>
             </div>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="bg-gradient-brand text-primary-foreground hover:opacity-90 border-0 shrink-0">
+                  <Plus className="h-4 w-4" /> Nouvelle discussion
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-xl">
+                <DialogHeader><DialogTitle>Démarrer une discussion</DialogTitle></DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block uppercase tracking-wider">Salon</label>
+                    <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as Category })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>#{c.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block uppercase tracking-wider">Sujet</label>
+                    <Input
+                      placeholder="Ex: Setup NFP de demain ?"
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      maxLength={160}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block uppercase tracking-wider">Premier message</label>
+                    <Textarea
+                      placeholder="Lance la discussion..."
+                      value={form.content}
+                      onChange={(e) => setForm({ ...form, content: e.target.value })}
+                      rows={5}
+                      maxLength={4000}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
+                  <Button onClick={createTopic} disabled={submitting} className="bg-gradient-brand text-primary-foreground border-0">
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    Lancer
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        {/* Search + Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-5">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Rechercher une discussion..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => setFilter("all")}
             className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
               filter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"
             }`}
-          >Tous</button>
+          >Tous les salons</button>
           {CATEGORIES.map((c) => (
             <button
               key={c.value}
               onClick={() => setFilter(c.value)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
+              className={`text-xs font-medium px-3 py-1.5 rounded-full border transition inline-flex items-center gap-1 ${
                 filter === c.value ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"
               }`}
-            >{c.label}</button>
+            ><Hash className="h-3 w-3" />{c.label}</button>
           ))}
         </div>
 
-        {/* Topics */}
+        {/* Conversation list (chat-style) */}
         {loading ? (
           <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
-          <Card className="glass border-dashed">
-            <CardContent className="py-16 text-center">
-              <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">Aucun sujet pour le moment. Sois le premier à publier !</p>
-            </CardContent>
-          </Card>
+          <div className="glass rounded-2xl border border-dashed border-border py-16 text-center">
+            <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">Aucune discussion pour le moment.</p>
+          </div>
         ) : (
-          <div className="space-y-3">
-            {filtered.map((t) => (
-              <Card key={t.id} className="glass hover:bg-surface-elevated/60 transition-all group">
-                <CardContent className="p-5">
-                  <div className="flex gap-4">
-                    <Avatar name={t.author?.full_name} email={t.author?.email} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        {t.is_pinned && <Pin className="h-3.5 w-3.5 text-warn" />}
-                        <CategoryBadge category={t.category} />
-                        <span className="text-xs text-muted-foreground">
-                          par <span className="text-foreground/80">{t.author?.full_name || t.author?.email?.split("@")[0] || "Trader"}</span> · {formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: fr })}
+          <div className="glass rounded-2xl overflow-hidden divide-y divide-border/60">
+            {filtered.map((t) => {
+              const authorName = t.author?.full_name || t.author?.email?.split("@")[0] || "Trader";
+              return (
+                <Link
+                  key={t.id}
+                  to={`/forum/${t.id}`}
+                  className="flex items-center gap-3 p-4 hover:bg-surface-elevated/60 transition-colors group relative"
+                >
+                  <Avatar name={t.author?.full_name} email={t.author?.email} userId={t.user_id} size={44} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      {t.is_pinned && <Pin className="h-3 w-3 text-warn" />}
+                      <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
+                        {t.title}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                      <CategoryBadge category={t.category} />
+                      <span className="truncate">{authorName}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">{t.content}</p>
+                  </div>
+                  <div className="shrink-0 flex flex-col items-end gap-1.5 text-xs text-muted-foreground">
+                    <span>{smartDate(t.last_activity_at || t.created_at)}</span>
+                    <div className="flex items-center gap-2">
+                      {t.reply_count > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold">
+                          {t.reply_count}
                         </span>
-                      </div>
-                      <Link to={`/forum/${t.id}`} className="block">
-                        <h3 className="font-display font-semibold text-lg leading-snug group-hover:text-primary transition-colors">
-                          {t.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{t.content}</p>
-                      </Link>
-                      <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                        <button
-                          onClick={() => toggleLike(t)}
-                          className={`inline-flex items-center gap-1.5 hover:text-foreground transition ${t.liked_by_me ? "text-rose-400" : ""}`}
-                        >
-                          <Heart className={`h-3.5 w-3.5 ${t.liked_by_me ? "fill-current" : ""}`} />
-                          {t.like_count}
+                      )}
+                      {(user?.id === t.user_id || isAdmin) && (
+                        <button onClick={(e) => deleteTopic(t, e)} className="opacity-0 group-hover:opacity-100 hover:text-destructive transition">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
-                        <Link to={`/forum/${t.id}`} className="inline-flex items-center gap-1.5 hover:text-foreground transition">
-                          <MessageSquare className="h-3.5 w-3.5" /> {t.reply_count} réponse{t.reply_count > 1 ? "s" : ""}
-                        </Link>
-                        {(user?.id === t.user_id || isAdmin) && (
-                          <button onClick={() => deleteTopic(t)} className="ml-auto hover:text-destructive transition inline-flex items-center gap-1">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>
@@ -344,25 +329,39 @@ function ForumList() {
   );
 }
 
-/* ---------------------------- DETAIL VIEW ---------------------------- */
-function ForumDetail({ id }: { id: string }) {
+/* ---------------------------- CHAT VIEW ---------------------------- */
+type ChatItem = (Reply & { _isTopic?: boolean }) | (Topic & { _isTopic: true });
+
+function ForumChat({ id }: { id: string }) {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [authors, setAuthors] = useState<Record<string, { full_name: string | null; email: string | null }>>({});
   const [loading, setLoading] = useState(true);
-  const [replyText, setReplyText] = useState("");
+  const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  async function ensureAuthors(ids: string[]) {
+    const missing = ids.filter((i) => i && !authors[i]);
+    if (!missing.length) return;
+    const { data } = await db.from("profiles").select("id, full_name, email").in("id", missing);
+    if (data) {
+      setAuthors((prev) => ({ ...prev, ...Object.fromEntries(data.map((p: any) => [p.id, p])) }));
+    }
+  }
 
   async function load() {
     setLoading(true);
     const { data: t, error } = await db.from("forum_topics").select("*").eq("id", id).maybeSingle();
-    if (error || !t) { toast.error("Sujet introuvable"); navigate("/forum"); return; }
+    if (error || !t) { toast.error("Discussion introuvable"); navigate("/forum"); return; }
     const { data: rs } = await db.from("forum_replies").select("*").eq("topic_id", id).order("created_at", { ascending: true });
     const rList = (rs ?? []) as Reply[];
     const ids = Array.from(new Set<string>([t.user_id, ...rList.map((r) => r.user_id)]));
     const { data: profs } = await db.from("profiles").select("id, full_name, email").in("id", ids);
-    const authors = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
+    setAuthors(Object.fromEntries((profs ?? []).map((p: any) => [p.id, p])));
     let likedTopic = false; const replyLikes = new Set<string>();
     if (user) {
       const { data: tLike } = await db.from("forum_likes").select("id").eq("user_id", user.id)
@@ -374,27 +373,60 @@ function ForumDetail({ id }: { id: string }) {
         (rLikes ?? []).forEach((l: any) => replyLikes.add(l.target_id));
       }
     }
-    setTopic({ ...t, author: authors[t.user_id] ?? null, liked_by_me: likedTopic });
-    setReplies(rList.map((r) => ({ ...r, author: authors[r.user_id] ?? null, liked_by_me: replyLikes.has(r.id) })));
+    setTopic({ ...t, liked_by_me: likedTopic });
+    setReplies(rList.map((r) => ({ ...r, liked_by_me: replyLikes.has(r.id) })));
     setLoading(false);
+    setTimeout(() => scrollToBottom("auto"), 50);
   }
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id, user?.id]);
 
-  async function postReply() {
-    if (!user) { toast.error("Connecte-toi pour répondre"); navigate("/auth"); return; }
-    const c = replyText.trim();
-    if (c.length < 1) return;
+  // Realtime new messages
+  useEffect(() => {
+    const ch = supabase
+      .channel(`forum_chat_${id}`)
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "forum_replies", filter: `topic_id=eq.${id}` },
+        async (payload) => {
+          const r = payload.new as Reply;
+          await ensureAuthors([r.user_id]);
+          setReplies((prev) => prev.some((x) => x.id === r.id) ? prev : [...prev, r]);
+          setTimeout(() => scrollToBottom("smooth"), 30);
+        })
+      .on("postgres_changes",
+        { event: "DELETE", schema: "public", table: "forum_replies", filter: `topic_id=eq.${id}` },
+        (payload) => {
+          const r = payload.old as Reply;
+          setReplies((prev) => prev.filter((x) => x.id !== r.id));
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line
+  }, [id]);
+
+  function scrollToBottom(behavior: ScrollBehavior = "smooth") {
+    bottomRef.current?.scrollIntoView({ behavior, block: "end" });
+  }
+
+  async function send() {
+    if (!user) { toast.error("Connecte-toi pour participer"); navigate("/auth"); return; }
+    const c = text.trim();
+    if (!c) return;
     setPosting(true);
-    const { error } = await db.from("forum_replies").insert({ topic_id: id, user_id: user.id, content: c });
+    const { data, error } = await db.from("forum_replies").insert({
+      topic_id: id, user_id: user.id, content: c,
+    }).select("*").single();
     setPosting(false);
     if (error) return toast.error(error.message);
-    setReplyText("");
-    load();
+    setText("");
+    // Optimistic add (realtime may also push it)
+    setReplies((prev) => prev.some((x) => x.id === data.id) ? prev : [...prev, data]);
+    await ensureAuthors([user.id]);
+    setTimeout(() => scrollToBottom("smooth"), 30);
   }
 
   async function toggleLike(target: "topic" | "reply", targetId: string, liked: boolean) {
-    if (!user) { toast.error("Connecte-toi pour liker"); return; }
+    if (!user) { toast.error("Connecte-toi pour réagir"); return; }
     if (liked) {
       await db.from("forum_likes").delete().eq("user_id", user.id).eq("target_type", target).eq("target_id", targetId);
     } else {
@@ -405,7 +437,7 @@ function ForumDetail({ id }: { id: string }) {
   }
 
   async function deleteReply(rid: string) {
-    if (!confirm("Supprimer cette réponse ?")) return;
+    if (!confirm("Supprimer ce message ?")) return;
     const { error } = await db.from("forum_replies").delete().eq("id", rid);
     if (error) return toast.error(error.message);
     setReplies((p) => p.filter((r) => r.id !== rid));
@@ -413,7 +445,7 @@ function ForumDetail({ id }: { id: string }) {
 
   async function deleteTopicAndBack() {
     if (!topic) return;
-    if (!confirm("Supprimer ce sujet ?")) return;
+    if (!confirm("Supprimer cette discussion ?")) return;
     const { error } = await db.from("forum_topics").delete().eq("id", topic.id);
     if (error) return toast.error(error.message);
     navigate("/forum");
@@ -428,121 +460,179 @@ function ForumDetail({ id }: { id: string }) {
     );
   }
 
+  // Build the message stream: topic body as the first message
+  const stream: ChatItem[] = [
+    { ...topic, _isTopic: true } as ChatItem,
+    ...replies,
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background flex flex-col">
       <AppHeader />
-      <main className="container py-8 max-w-3xl">
-        <Button variant="ghost" size="sm" asChild className="mb-4 -ml-3 text-muted-foreground">
-          <Link to="/forum"><ArrowLeft className="h-4 w-4" /> Retour au forum</Link>
-        </Button>
 
-        <Card className="glass-strong">
-          <CardHeader>
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+      {/* Channel header */}
+      <div className="border-b border-border/60 bg-surface-elevated/40 backdrop-blur-xl sticky top-0 z-10">
+        <div className="container max-w-3xl py-3 flex items-center gap-3">
+          <Button variant="ghost" size="icon" asChild className="shrink-0">
+            <Link to="/forum"><ArrowLeft className="h-4 w-4" /></Link>
+          </Button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <Hash className="h-3.5 w-3.5 text-muted-foreground" />
               <CategoryBadge category={topic.category} />
-              {topic.is_pinned && <Badge variant="secondary"><Pin className="h-3 w-3" /> Épinglé</Badge>}
+              {topic.is_pinned && <Badge variant="secondary" className="h-5"><Pin className="h-3 w-3" /></Badge>}
             </div>
-            <CardTitle className="font-display text-2xl md:text-3xl">{topic.title}</CardTitle>
-            <div className="flex items-center gap-3 mt-3">
-              <Avatar name={topic.author?.full_name} email={topic.author?.email} />
-              <div>
-                <div className="text-sm font-medium">{topic.author?.full_name || topic.author?.email?.split("@")[0] || "Trader"}</div>
-                <div className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(topic.created_at), { addSuffix: true, locale: fr })}</div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-invert max-w-none whitespace-pre-wrap text-foreground/90 leading-relaxed">
-              {topic.content}
-            </div>
-            <div className="mt-6 flex items-center gap-4 pt-4 border-t border-border/50">
-              <button
-                onClick={() => toggleLike("topic", topic.id, !!topic.liked_by_me)}
-                className={`inline-flex items-center gap-1.5 text-sm hover:text-foreground transition ${topic.liked_by_me ? "text-rose-400" : "text-muted-foreground"}`}
-              >
-                <Heart className={`h-4 w-4 ${topic.liked_by_me ? "fill-current" : ""}`} /> {topic.like_count}
+            <h2 className="font-semibold truncate text-sm md:text-base">{topic.title}</h2>
+          </div>
+          <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-3">
+            <span className="inline-flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" /> {topic.reply_count}</span>
+            <button
+              onClick={() => toggleLike("topic", topic.id, !!topic.liked_by_me)}
+              className={`inline-flex items-center gap-1 hover:text-foreground transition ${topic.liked_by_me ? "text-rose-400" : ""}`}
+            >
+              <Heart className={`h-3.5 w-3.5 ${topic.liked_by_me ? "fill-current" : ""}`} /> {topic.like_count}
+            </button>
+            {(user?.id === topic.user_id || isAdmin) && (
+              <button onClick={deleteTopicAndBack} className="hover:text-destructive transition">
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
-              <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                <MessageSquare className="h-4 w-4" /> {topic.reply_count}
-              </div>
-              {(user?.id === topic.user_id || isAdmin) && (
-                <button onClick={deleteTopicAndBack} className="ml-auto text-sm text-muted-foreground hover:text-destructive transition inline-flex items-center gap-1">
-                  <Trash2 className="h-3.5 w-3.5" /> Supprimer
-                </button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        </div>
+      </div>
 
-        {/* Replies */}
-        <div className="mt-8">
-          <h2 className="font-display text-lg font-semibold mb-4">
-            {replies.length} réponse{replies.length > 1 ? "s" : ""}
-          </h2>
-          <div className="space-y-3">
-            {replies.map((r) => (
-              <Card key={r.id} className="glass">
-                <CardContent className="p-4">
-                  <div className="flex gap-3">
-                    <Avatar name={r.author?.full_name} email={r.author?.email} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium">{r.author?.full_name || r.author?.email?.split("@")[0] || "Trader"}</span>
-                        <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(r.created_at), { addSuffix: true, locale: fr })}</span>
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="container max-w-3xl py-6 space-y-1">
+          {stream.map((item, idx) => {
+            const isTopic = !!(item as any)._isTopic;
+            const m = item as Reply;
+            const mine = user?.id === m.user_id;
+            const prev = stream[idx - 1] as Reply | undefined;
+            const prevIsMine = prev && (prev as any).user_id === m.user_id && !((prev as any)._isTopic);
+            const sameAuthorAsPrev = !isTopic && prev && !((prev as any)._isTopic) && prev.user_id === m.user_id
+              && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60_000);
+            const author = authors[m.user_id];
+            const authorName = author?.full_name || author?.email?.split("@")[0] || "Trader";
+
+            // Date separator
+            const showDateSep = !prev || new Date((prev as any).created_at).toDateString() !== new Date(m.created_at).toDateString();
+
+            return (
+              <div key={m.id}>
+                {showDateSep && (
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-border/60" />
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+                      {format(new Date(m.created_at), "EEEE d MMMM", { locale: fr })}
+                    </span>
+                    <div className="flex-1 h-px bg-border/60" />
+                  </div>
+                )}
+
+                <div className={`group flex gap-2.5 ${mine ? "flex-row-reverse" : ""} ${sameAuthorAsPrev ? "mt-0.5" : "mt-3"}`}>
+                  <div className="w-9 shrink-0">
+                    {!sameAuthorAsPrev && (
+                      <Avatar name={author?.full_name} email={author?.email} userId={m.user_id} size={36} />
+                    )}
+                  </div>
+                  <div className={`flex flex-col max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
+                    {!sameAuthorAsPrev && (
+                      <div className={`flex items-center gap-2 mb-1 text-xs ${mine ? "flex-row-reverse" : ""}`}>
+                        <span className="font-semibold text-foreground/90">{mine ? "Toi" : authorName}</span>
+                        <span className="text-muted-foreground">{smartDate(m.created_at)}</span>
+                        {isTopic && <Badge variant="secondary" className="h-4 text-[9px] uppercase tracking-wider">Sujet</Badge>}
                       </div>
-                      <div className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">{r.content}</div>
-                      <div className="mt-2 flex items-center gap-3 text-xs">
+                    )}
+                    <div
+                      className={`relative px-4 py-2.5 rounded-2xl whitespace-pre-wrap break-words text-sm leading-relaxed shadow-sm ${
+                        mine
+                          ? "bg-gradient-brand text-primary-foreground rounded-tr-sm"
+                          : "bg-surface-elevated border border-border/60 text-foreground rounded-tl-sm"
+                      } ${isTopic ? "ring-1 ring-primary/30" : ""}`}
+                    >
+                      {isTopic ? (topic.content) : m.content}
+
+                      {/* Hover actions */}
+                      <div className={`absolute -top-3 ${mine ? "left-2" : "right-2"} opacity-0 group-hover:opacity-100 transition flex items-center gap-1 bg-background border border-border/60 rounded-full px-1.5 py-0.5 shadow`}>
                         <button
-                          onClick={() => toggleLike("reply", r.id, !!r.liked_by_me)}
-                          className={`inline-flex items-center gap-1 hover:text-foreground transition ${r.liked_by_me ? "text-rose-400" : "text-muted-foreground"}`}
+                          onClick={() => isTopic
+                            ? toggleLike("topic", topic.id, !!topic.liked_by_me)
+                            : toggleLike("reply", m.id, !!(m as Reply).liked_by_me)}
+                          className={`p-1 hover:text-rose-400 transition ${
+                            (isTopic ? topic.liked_by_me : (m as Reply).liked_by_me) ? "text-rose-400" : "text-muted-foreground"
+                          }`}
+                          title="Aimer"
                         >
-                          <Heart className={`h-3.5 w-3.5 ${r.liked_by_me ? "fill-current" : ""}`} /> {r.like_count}
+                          <Heart className={`h-3.5 w-3.5 ${(isTopic ? topic.liked_by_me : (m as Reply).liked_by_me) ? "fill-current" : ""}`} />
                         </button>
-                        {(user?.id === r.user_id || isAdmin) && (
-                          <button onClick={() => deleteReply(r.id)} className="ml-auto text-muted-foreground hover:text-destructive transition">
+                        {!isTopic && (user?.id === m.user_id || isAdmin) && (
+                          <button
+                            onClick={() => deleteReply(m.id)}
+                            className="p-1 text-muted-foreground hover:text-destructive transition"
+                            title="Supprimer"
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
                     </div>
+                    {((isTopic ? topic.like_count : (m as Reply).like_count) > 0) && (
+                      <div className={`mt-1 inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full bg-surface-elevated border border-border/60 ${mine ? "self-end" : "self-start"}`}>
+                        <Heart className="h-3 w-3 text-rose-400 fill-current" />
+                        <span className="text-muted-foreground">{isTopic ? topic.like_count : (m as Reply).like_count}</span>
+                      </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Reply form */}
-          <Card className="mt-6 glass">
-            <CardContent className="p-4">
-              {user ? (
-                <>
-                  <Textarea
-                    placeholder="Partage ton avis, ton retour, une question..."
-                    rows={4}
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    maxLength={5000}
-                  />
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{replyText.length}/5000</span>
-                    <Button onClick={postReply} disabled={posting || !replyText.trim()} className="bg-gradient-brand text-primary-foreground border-0">
-                      {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      Répondre
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-3">Connecte-toi pour participer à la discussion.</p>
-                  <Button asChild className="bg-gradient-brand text-primary-foreground border-0">
-                    <Link to="/auth">Se connecter</Link>
-                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />
         </div>
-      </main>
+      </div>
+
+      {/* Composer */}
+      <div className="border-t border-border/60 bg-surface-elevated/40 backdrop-blur-xl sticky bottom-0">
+        <div className="container max-w-3xl py-3">
+          {user ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); send(); }}
+              className="flex items-end gap-2 glass rounded-2xl p-2 pl-4"
+            >
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+                }}
+                placeholder={`Message dans #${catMeta(topic.category).label}...`}
+                rows={1}
+                maxLength={5000}
+                className="flex-1 min-h-[40px] max-h-[160px] resize-none border-0 bg-transparent focus-visible:ring-0 px-0 py-2 text-sm"
+              />
+              <Button
+                type="submit"
+                disabled={posting || !text.trim()}
+                size="icon"
+                className="bg-gradient-brand text-primary-foreground border-0 shrink-0 h-10 w-10 rounded-xl"
+              >
+                {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </form>
+          ) : (
+            <div className="glass rounded-2xl p-4 text-center">
+              <p className="text-sm text-muted-foreground mb-2">Connecte-toi pour participer à la discussion.</p>
+              <Button asChild size="sm" className="bg-gradient-brand text-primary-foreground border-0">
+                <Link to="/auth">Se connecter</Link>
+              </Button>
+            </div>
+          )}
+          <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+            Entrée pour envoyer · Maj+Entrée pour aller à la ligne
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -550,5 +640,5 @@ function ForumDetail({ id }: { id: string }) {
 /* ---------------------------- ROUTER WRAPPER ---------------------------- */
 export default function Forum() {
   const { id } = useParams();
-  return id ? <ForumDetail id={id} /> : <ForumList />;
+  return id ? <ForumChat id={id} /> : <ForumList />;
 }
