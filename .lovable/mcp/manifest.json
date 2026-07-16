@@ -1,0 +1,244 @@
+{
+  "version": 1,
+  "sdk_version": "0.22.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://qaqdfvjmrghfqknvhyso.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "masterlogpro-mcp",
+      "version": "0.1.0",
+      "title": "MasterLogPro"
+    },
+    "tools": [
+      {
+        "name": "list_trades",
+        "title": "List my trades",
+        "description": "List the signed-in user's most recent trades from their MasterLogPro journal.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Number of trades to return (max 100)."
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "win",
+                    "loss",
+                    "break_even",
+                    "open"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional filter by trade status."
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_trade",
+        "title": "Log a trade",
+        "description": "Insert a new trade in the signed-in user's MasterLogPro journal.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "pair": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Trading pair, e.g. 'EUR/USD', 'XAU/USD', 'BTC/USD'."
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "long",
+                "short"
+              ],
+              "description": "Trade direction."
+            },
+            "entry_price": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Entry price."
+            },
+            "exit_price": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Exit price if closed."
+            },
+            "stop_loss": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Stop loss price."
+            },
+            "take_profit": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Take profit price."
+            },
+            "lot_size": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Position size (lots)."
+            },
+            "result_usd": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Realized P&L in USD."
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "win",
+                    "loss",
+                    "break_even",
+                    "open"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Trade outcome."
+            },
+            "technical_comment": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Optional technical analysis note."
+            },
+            "trade_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "ISO datetime; defaults to now."
+            }
+          },
+          "required": [
+            "pair",
+            "direction",
+            "entry_price",
+            "exit_price",
+            "stop_loss",
+            "take_profit",
+            "lot_size",
+            "result_usd",
+            "status",
+            "technical_comment",
+            "trade_at"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_stats",
+        "title": "Get my trading stats",
+        "description": "Return the signed-in user's aggregated trading stats: total trades, win rate, net P&L, best streak.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_economic_news",
+        "title": "List economic news",
+        "description": "List upcoming and recent economic news events tracked by MasterLogPro.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 15,
+              "description": "Number of news items to return."
+            },
+            "impact": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional filter by impact."
+            }
+          },
+          "required": [
+            "impact"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
