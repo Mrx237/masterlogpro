@@ -99,7 +99,7 @@ const Auth = () => {
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Connecté !");
-    navigate("/dashboard");
+    navigate(nextPath, { replace: true });
   }
 
   return (
