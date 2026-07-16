@@ -63,7 +63,7 @@ const Auth = () => {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: postAuthUrl,
         data: {
           full_name: parsed.data.full_name,
           ...(referralCode ? { referral_code: referralCode } : {}),
