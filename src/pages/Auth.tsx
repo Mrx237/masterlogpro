@@ -86,7 +86,7 @@ const Auth = () => {
 
     setLoading(false);
     toast.success("Compte créé !");
-    navigate("/dashboard");
+    navigate(nextPath, { replace: true });
   }
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
