@@ -23,6 +23,7 @@ import Admin from "./pages/Admin.tsx";
 import Leaderboard from "./pages/Leaderboard.tsx";
 import Affiliate from "./pages/Affiliate.tsx";
 import Forum from "./pages/Forum.tsx";
+import OAuthConsent from "./pages/OAuthConsent.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
