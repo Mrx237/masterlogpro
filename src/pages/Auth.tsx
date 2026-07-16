@@ -28,6 +28,14 @@ const Auth = () => {
   const [tab, setTab] = useState<"login" | "signup">(params.get("mode") === "signup" ? "signup" : "login");
   const [loading, setLoading] = useState(false);
 
+  // Same-origin relative path only (starts with "/" but not "//" or "/\\")
+  const rawNext = params.get("next");
+  const nextPath =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/\\")
+      ? rawNext
+      : "/dashboard";
+  const postAuthUrl = `${window.location.origin}${nextPath}`;
+
   useEffect(() => {
     // Capture & persist referral code from ?ref=CODE
     const ref = params.get("ref");
@@ -35,9 +43,9 @@ const Auth = () => {
       try { localStorage.setItem("mlp_ref", ref.trim().toUpperCase()); } catch {}
     }
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/dashboard", { replace: true });
+      if (data.session) navigate(nextPath, { replace: true });
     });
-  }, [navigate, params]);
+  }, [navigate, params, nextPath]);
 
   async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -55,7 +63,7 @@ const Auth = () => {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: postAuthUrl,
         data: {
           full_name: parsed.data.full_name,
           ...(referralCode ? { referral_code: referralCode } : {}),
@@ -78,7 +86,7 @@ const Auth = () => {
 
     setLoading(false);
     toast.success("Compte créé !");
-    navigate("/dashboard");
+    navigate(nextPath, { replace: true });
   }
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -91,7 +99,7 @@ const Auth = () => {
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Connecté !");
-    navigate("/dashboard");
+    navigate(nextPath, { replace: true });
   }
 
   return (
