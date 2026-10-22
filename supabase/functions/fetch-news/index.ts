@@ -41,15 +41,8 @@ function normalizeImpact(i: string): "high" | "medium" | "low" {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    if (!FINNHUB_API_KEY) {
-      return new Response(JSON.stringify({ error: "FINNHUB_API_KEY non configurée" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const parseDateInput = (value: unknown) => {
@@ -66,32 +59,37 @@ Deno.serve(async (req) => {
     const from = parseDateInput(body?.from) ?? fallbackFrom;
     const to = parseDateInput(body?.to) ?? fallbackTo;
 
-    const url = `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${FINNHUB_API_KEY}`;
-    const r = await fetch(url);
-    if (!r.ok) {
-      const txt = await r.text();
-      throw new Error(`Finnhub ${r.status}: ${txt}`);
+    // Free public calendar (Forex Factory weekly feed). Finnhub's calendar is premium-only (403).
+    const CCY_TO_COUNTRY: Record<string, string> = {
+      USD: "US", EUR: "EU", GBP: "GB", JPY: "JP", CHF: "CH", CAD: "CA", AUD: "AU", NZD: "NZ", CNY: "CN",
+    };
+    const feeds = ["https://nfs.faireconomy.media/ff_calendar_thisweek.json"];
+    const all: any[] = [];
+    for (const f of feeds) {
+      const r = await fetch(f, { headers: { "User-Agent": "Mozilla/5.0 MasterLogPro" } });
+      if (!r.ok) throw new Error(`Calendrier ${r.status}`);
+      const j = await r.json();
+      if (Array.isArray(j)) all.push(...j);
     }
-    const json = await r.json();
-    const events: FinnhubEvent[] = json?.economicCalendar ?? [];
+    const events = all.filter((e) => e?.title && e?.date && e?.impact !== "Holiday");
 
-    const rows = events.map((ev) => {
-      const ccy = COUNTRY_TO_CCY[ev.country] ?? ev.country ?? "USD";
-      const eventAt = new Date(ev.time.replace(" ", "T") + "Z").toISOString();
-      const ext = `finnhub:${ev.country}:${ev.event}:${ev.time}`;
+    const rows = events.map((ev: any) => {
+      const ccy = String(ev.country ?? "USD").toUpperCase();
+      const eventAt = new Date(ev.date).toISOString();
+      const imp = normalizeImpact(ev.impact);
       return {
-        external_id: ext,
-        title: ev.event,
+        external_id: `ff:${ccy}:${ev.title}:${eventAt}`,
+        title: ev.title,
         currency: ccy,
-        country: ev.country,
+        country: CCY_TO_COUNTRY[ccy] ?? ccy,
         event_at: eventAt,
-        summary: `Indicateur économique ${ccy}. Prévision: ${ev.estimate ?? "—"} · Précédent: ${ev.prev ?? "—"}${ev.actual != null ? ` · Réel: ${ev.actual}` : ""}`,
-        actual: ev.actual?.toString() ?? null,
-        forecast: ev.estimate?.toString() ?? null,
-        previous: ev.prev?.toString() ?? null,
-        impact: normalizeImpact(ev.impact),
-        sentiment: inferSentiment(ev),
-        source: "finnhub",
+        summary: `Indicateur économique ${ccy}. Prévision: ${ev.forecast || "—"} · Précédent: ${ev.previous || "—"}`,
+        actual: null,
+        forecast: ev.forecast || null,
+        previous: ev.previous || null,
+        impact: imp,
+        sentiment: "neutral" as const,
+        source: "forexfactory",
       };
     });
 
