@@ -120,10 +120,12 @@ export default function News() {
     }
   };
 
+  const [autoTried, setAutoTried] = useState(false);
   useEffect(() => {
-    if (loading || refreshing || rows.length > 0) return;
+    if (autoTried || loading || refreshing || rows.length > 0) return;
+    setAutoTried(true);
     void refresh();
-  }, [loading, refreshing, rows.length]);
+  }, [autoTried, loading, refreshing, rows.length]);
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== "all" && r.impact !== filter) return false;
@@ -219,7 +221,7 @@ export default function News() {
           <Card className="glass p-10 text-center text-sm text-muted-foreground space-y-3">
             <p>Aucune news économique importante pour cette {dateMode === "custom" ? "date" : dateMode === "today" ? "journée" : dateMode === "week" ? "semaine" : "sélection"}.</p>
             <Button size="sm" variant="outline" onClick={refresh} disabled={refreshing} className="gap-2">
-              <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /> Actualiser depuis Finnhub
+              <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /> Actualiser
             </Button>
           </Card>
         ) : (
