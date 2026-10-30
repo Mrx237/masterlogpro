@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { Card } from "@/components/ui/card";
@@ -202,14 +202,14 @@ function renderBold(s: string) {
   return s.replace(/\*\*(.+?)\*\*/g, "<strong class='text-foreground'>$1</strong>");
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+const Stat = forwardRef<HTMLDivElement, { label: string; value: string; accent?: boolean }>(function Stat({ label, value, accent }, ref) {
   return (
-    <div className="rounded-lg border border-border/60 bg-background/40 p-2.5 text-center">
+    <div ref={ref} className="rounded-lg border border-border/60 bg-background/40 p-2.5 text-center">
       <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={cn("font-display font-bold text-lg md:text-xl", accent && "text-primary")}>{value}</div>
     </div>
   );
-}
+});
 
 function ZoneCard({ z }: { z: BotZone }) {
   const Bias = z.bias === "bullish" ? TrendingUp : z.bias === "bearish" ? TrendingDown : Minus;
