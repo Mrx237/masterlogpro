@@ -7,7 +7,7 @@ const TESTIMONIALS = [
     avatar: "YM",
     text: "Avant MasterLogPro je tradais à l'instinct. En 3 mois j'ai identifié 2 erreurs qui me coûtaient 70% de mes pertes. Mon win rate est passé de 41% à 63%.",
     rating: 5,
-    badge: "Formation",
+    badge: "Pro",
   },
   {
     name: "Aïcha B.",
@@ -15,7 +15,7 @@ const TESTIMONIALS = [
     avatar: "AB",
     text: "Le feedback du coach change tout. Il ne te dit pas juste 'c'est bien', il te montre exactement où tu as raté la lecture du contexte. C'est ça qui m'a fait progresser.",
     rating: 5,
-    badge: "Formation",
+    badge: "Pro",
   },
   {
     name: "Patrick N.",
@@ -37,9 +37,9 @@ const TESTIMONIALS = [
     name: "Junior T.",
     role: "Trader débutant · Bangui",
     avatar: "JT",
-    text: "J'ai pris la formation en sortant de la fac. 6 mois plus tard, j'ai un système clair, des règles écrites, et je gère mon premier compte funded. Merci coach.",
+    text: "J'ai commencé le journal en sortant de la fac. 6 mois plus tard, j'ai un système clair, des règles écrites, et je gère mon premier compte funded.",
     rating: 5,
-    badge: "Formation",
+    badge: "Pro",
   },
   {
     name: "Cédric A.",
@@ -99,7 +99,7 @@ export function Testimonials() {
               </div>
               <span
                 className={`text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded ${
-                  t.badge === "Formation"
+                  t.badge === "Pro"
                     ? "bg-student/15 text-student border border-student/30"
                     : "bg-subscriber/15 text-subscriber border border-subscriber/30"
                 }`}

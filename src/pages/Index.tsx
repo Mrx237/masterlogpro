@@ -151,7 +151,7 @@ const Index = () => {
               { icon: BarChart3, title: "Statistiques live", desc: "Win rate, profit factor, courbe d'équité, P&L par paire." },
               { icon: Brain, title: "Analyse fondamentale", desc: "News, impact, sentiment, sources — comprends le marché." },
               { icon: Target, title: "Tags d'erreurs", desc: "Mauvais timing, overtrading, FOMO. Identifie tes patterns." },
-              { icon: GraduationCap, title: "Feedback coach", desc: "Un trader pro analyse tes trades et te corrige." },
+              { icon: GraduationCap, title: "Pour tous les niveaux", desc: "Du débutant au pro, le même outil pour progresser." },
               { icon: Activity, title: "Screenshots", desc: "Joins ton chart à chaque trade pour le revoir plus tard." },
               { icon: Zap, title: "Mobile-first", desc: "Saisie en 30 secondes depuis ton téléphone, partout." },
             ].map((f, i) => (
