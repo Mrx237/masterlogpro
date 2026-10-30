@@ -8,47 +8,19 @@ export const MOBILE_MONEY = {
 
 export type OfferKey = "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m";
 
-// ─── Pricing (promo de lancement) ─────────────────────────────
-// Formation : 25 000 FCFA jusqu'au 20 juin 2026, puis 50 000 FCFA
-// Mensuel   : 3 500 FCFA jusqu'au 20 juillet 2026, puis 5 000 FCFA
-// Abos longue durée recalculés au prorata du nouveau prix mensuel (5 000)
-const FORMATION_PROMO_END = new Date("2026-06-20T23:59:59+01:00");
-const SUBSCRIPTION_PROMO_END = new Date("2026-07-20T23:59:59+01:00");
+// ─── Pricing ─────────────────────────────────────────────────
+// Formation supprimée. Abonnement unique : 1 500 FCFA / mois pour tous les traders.
+export const MONTHLY_PRICE = 1500;
+export const PUBLIC_OFFERS: OfferKey[] = ["sub_1m", "sub_3m", "sub_6m", "sub_12m"];
+const MONTHS: Record<OfferKey, number> = { formation: 1, sub_1m: 1, sub_3m: 3, sub_6m: 6, sub_12m: 12 };
 
-const PROMO_PRICES: Record<OfferKey, number> = {
-  formation: 25000,
-  sub_1m: 3500,
-  sub_3m: 10500,   // 3 500 × 3
-  sub_6m: 21000,   // 3 500 × 6
-  sub_12m: 42000,  // 3 500 × 12
-};
-
-const REGULAR_PRICES: Record<OfferKey, number> = {
-  formation: 50000,
-  sub_1m: 5000,
-  sub_3m: 15000,   // 5 000 × 3
-  sub_6m: 30000,   // 5 000 × 6
-  sub_12m: 60000,  // 5 000 × 12
-};
-
-function isPromoActive(key: OfferKey, now: Date = new Date()): boolean {
-  const deadline = key === "formation" ? FORMATION_PROMO_END : SUBSCRIPTION_PROMO_END;
-  return now <= deadline;
+export function getOfferPrice(key: OfferKey, _now: Date = new Date()): number {
+  return MONTHLY_PRICE * MONTHS[key];
 }
 
-export function getOfferPrice(key: OfferKey, now: Date = new Date()): number {
-  return isPromoActive(key, now) ? PROMO_PRICES[key] : REGULAR_PRICES[key];
-}
-
-export function getPromoInfo(key: OfferKey, now: Date = new Date()) {
-  const deadline = key === "formation" ? FORMATION_PROMO_END : SUBSCRIPTION_PROMO_END;
-  const active = now <= deadline;
-  return {
-    active,
-    deadline,
-    promoPrice: PROMO_PRICES[key],
-    regularPrice: REGULAR_PRICES[key],
-  };
+export function getPromoInfo(key: OfferKey, _now: Date = new Date()) {
+  const p = getOfferPrice(key);
+  return { active: false, deadline: new Date(0), promoPrice: p, regularPrice: p };
 }
 
 type OfferDef = { label: string; price: number; description: string; type: "formation" | "subscription"; durationDays?: number };
