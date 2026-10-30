@@ -121,8 +121,7 @@ const Index = () => {
                 "Chaque trade documenté : technique + fondamental",
                 "Stats temps réel : win rate, profit factor, P&L",
                 "Tags d'erreurs pour identifier tes patterns",
-                "Coach humain qui analyse tes trades (formation)",
-              ].map((t) => (
+                              ].map((t) => (
                 <li key={t} className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-gain shrink-0 mt-0.5" />
                   <span className="text-foreground/90">{t}</span>
@@ -225,37 +224,18 @@ const Index = () => {
           <h2 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-4">
             Choisis ton <span className="italic font-light">niveau d'engagement.</span>
           </h2>
-          <p className="text-muted-foreground">Deux univers distincts. Deux ambitions différentes.</p>
+          <p className="text-muted-foreground">Un seul abonnement, le même prix pour tous les traders.</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* STUDENT — Gold/Amber */}
-          <PathCard
-            tone="student"
-            kicker="Formation complète"
-            title="Devenir trader."
-            price={formatFCFA(OFFERS.formation.price)}
-            priceNote="Formation 50 000 + Accès plateforme 20 000 · paiement unique"
-            description="Tu veux apprendre vraiment. Tu veux qu'un coach analyse tes trades. Tu veux des exercices et un cadre."
-            features={[
-              "Formation trading complète (50 000 FCFA)",
-              "Accès plateforme illimité (20 000 FCFA)",
-              "Stats avancées + analyse fondamentale",
-              "Exercices structurés et corrigés",
-              "Feedback personnel du coach",
-            ]}
-            cta="Rejoindre la formation"
-            href="/subscribe?offer=formation"
-          />
-
+        <div className="grid max-w-xl mx-auto gap-6">
           {/* SUBSCRIBER — Cyan */}
           <PathCard
             tone="subscriber"
             kicker="Abonnement Journal"
             title="Suivre tes trades."
-            price={`dès ${formatFCFA(5000)}`}
+            price={`${formatFCFA(1500)} / mois`}
             priceNote="Mensuel · trimestriel · annuel"
-            description="Tu sais déjà trader. Tu veux juste un outil pro pour documenter et mesurer ta performance."
+            description="Débutant ou pro : un outil pro pour documenter et mesurer ta performance."
             features={[
               "Journal de trading complet",
               "Statistiques temps réel",
@@ -284,7 +264,7 @@ const Index = () => {
           <div className="grid md:grid-cols-4 gap-4">
             {[
               { n: "01", t: "Inscription", d: "Crée ton compte en 30 secondes." },
-              { n: "02", t: "Choix offre", d: "Formation ou abonnement." },
+              { n: "02", t: "Choix offre", d: "Abonnement 1 500 FCFA/mois." },
               { n: "03", t: "Mobile Money", d: "MTN, Orange, Airtel." },
               { n: "04", t: "Activation", d: "Validation WhatsApp en 5 min." },
             ].map((s, i) => (
@@ -335,11 +315,6 @@ const Index = () => {
               Suis tes trades. Comprends tes erreurs. Deviens un trader discipliné.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" asChild className="bg-gradient-gold text-student-foreground hover:opacity-95 border-0 font-semibold h-12 px-7 glow-gold">
-                <Link to="/subscribe?offer=formation">
-                  <GraduationCap className="h-4 w-4" /> Formation complète
-                </Link>
-              </Button>
               <Button size="lg" asChild className="bg-gradient-subscriber text-subscriber-foreground hover:opacity-95 border-0 font-semibold h-12 px-7 glow-cyan">
                 <Link to="/subscribe">
                   <LineChart className="h-4 w-4" /> Abonnement Journal

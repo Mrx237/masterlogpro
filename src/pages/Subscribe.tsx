@@ -12,9 +12,9 @@ import { PromoBadge } from "@/components/PromoBadge";
 
 const SUBS: { key: OfferKey; badge?: string; savings?: string }[] = [
   { key: "sub_1m" },
-  { key: "sub_3m", savings: "−17%" },
-  { key: "sub_6m", badge: "POPULAIRE", savings: "−17%" },
-  { key: "sub_12m", savings: "Best deal" },
+  { key: "sub_3m", savings: undefined },
+  { key: "sub_6m", badge: "POPULAIRE", savings: undefined },
+  { key: "sub_12m", savings: undefined },
 ];
 
 const Subscribe = () => {

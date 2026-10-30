@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils";
 
 const ITEMS = [
   {
-    q: "Je débute. La formation est-elle vraiment adaptée ?",
-    a: "Oui. La formation part de zéro : vocabulaire, lecture de chandeliers, gestion du risque, psychologie, plan de trading. Chaque module est suivi d'exercices corrigés par le coach. Tu progresses à ton rythme.",
+    q: "Je débute. La plateforme est-elle adaptée ?",
+    a: "Oui. Le journal t'aide à suivre chaque trade, repérer tes erreurs et mesurer tes progrès, que tu débutes ou que tu sois pro.",
   },
   {
-    q: "C'est quoi la différence entre la Formation et l'Abonnement ?",
-    a: "La Formation = apprendre à trader avec un coach humain qui corrige tes trades (paiement unique 70 000 FCFA, accès plateforme inclus). L'Abonnement = juste l'accès à la plateforme pour journaliser tes trades, à partir de 5 000 FCFA/mois.",
+    q: "Combien coûte l'abonnement ?",
+    a: "1 500 FCFA par mois, le même prix pour tous les traders, débutants comme pros. Tu peux aussi payer 3, 6 ou 12 mois d'avance.",
   },
   {
     q: "Comment se passe le paiement Mobile Money ?",
