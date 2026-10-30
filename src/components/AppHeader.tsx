@@ -42,7 +42,7 @@ export function AppHeader() {
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden xl:flex items-center gap-1">
           {user && (
             <>
               <NavLink to="/dashboard" className={linkCls}>Dashboard</NavLink>
@@ -75,7 +75,7 @@ export function AppHeader() {
           )}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden xl:flex items-center gap-2">
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
@@ -98,7 +98,7 @@ export function AppHeader() {
         </div>
 
         <button
-          className="md:hidden p-2 rounded-md hover:bg-secondary text-foreground"
+          className="xl:hidden p-2 rounded-md hover:bg-secondary text-foreground"
           onClick={() => setOpen(!open)}
           aria-label="Menu"
         >
@@ -107,7 +107,7 @@ export function AppHeader() {
       </div>
 
       {open && (
-        <div className="md:hidden border-t border-border/50 glass-strong animate-fade-in">
+        <div className="xl:hidden border-t border-border/50 glass-strong animate-fade-in">
           <div className="container py-3 flex flex-col gap-1">
             {user ? (
               <>

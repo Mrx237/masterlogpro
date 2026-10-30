@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -111,7 +111,11 @@
   html { color-scheme: dark; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
     background-image: var(--gradient-mesh);
     background-attachment: fixed;
   }
@@ -131,6 +135,21 @@
   ::selection { background: hsl(var(--primary) / 0.3); color: hsl(var(--foreground)); }
 }
 
+@layer base {
+  /* Pages keep the premium mesh visible behind their solid background */
+  .min-h-screen.bg-background { background-color: transparent; }
+  h1 { letter-spacing: -0.03em; }
+  button, a { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: 200ms; }
+  :focus-visible { outline: 2px solid hsl(var(--ring) / 0.7); outline-offset: 2px; }
+  @media (max-width: 640px) {
+    .container { padding-left: 1rem; padding-right: 1rem; }
+    h1 { font-size: clamp(1.75rem, 7vw, 2.5rem); line-height: 1.1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
 @layer utilities {
   /* === Glass surfaces ======================================== */
   .glass {
@@ -138,7 +157,10 @@
     backdrop-filter: blur(16px) saturate(140%);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
     border: 1px solid hsl(210 40% 96% / 0.08);
+    box-shadow: 0 1px 0 0 hsl(210 40% 96% / 0.06) inset, 0 24px 60px -28px hsl(240 80% 3% / 0.7);
+    transition: border-color 250ms ease, box-shadow 250ms ease, transform 250ms ease;
   }
+  .glass:hover { border-color: hsl(var(--primary) / 0.22); }
   .glass-strong {
     background: linear-gradient(180deg, hsl(226 50% 14% / 0.85) 0%, hsl(226 50% 10% / 0.9) 100%);
     backdrop-filter: blur(24px) saturate(180%);
