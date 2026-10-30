@@ -34,11 +34,11 @@ const Subscribe = () => {
             Choisis ton parcours
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold leading-[1.05] mb-5">
-            Deux univers.<br />
-            <span className="text-gradient-brand">Une seule ambition.</span>
+            Un seul prix.<br />
+            <span className="text-gradient-brand">Pour tous les traders.</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-            Apprends avec un coach ou suis simplement tes performances. Paiement Mobile Money, activation en 5 minutes.
+            1 500 FCFA par mois, du débutant au pro. Paiement Mobile Money, activation en 5 minutes.
           </p>
         </div>
       </section>
@@ -46,116 +46,15 @@ const Subscribe = () => {
       <main className="container pb-24 space-y-16">
 
         {/* ╔═══════════════════════════════════════════════════════╗
-            ║  STUDENT PATH — Gold/Amber                              ║
-            ╚═══════════════════════════════════════════════════════╝ */}
-        <section className="relative">
-          <PathHeader
-            num="01"
-            tone="student"
-            label="Parcours Étudiant"
-            title="Devenir trader."
-            subtitle="Pour ceux qui veulent vraiment apprendre, avec un coach."
-          />
-
-          <div className={cn(
-            "relative group rounded-3xl overflow-hidden glass-strong",
-            highlight === "formation" ? "ring-gold" : "ring-1 ring-student/20"
-          )}>
-            {/* Aurora */}
-            <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-student/20 blur-[120px]" />
-            <div className="absolute inset-0 grid-bg opacity-30" />
-
-            <div className="relative grid lg:grid-cols-5 gap-0">
-              {/* Left: pitch */}
-              <div className="lg:col-span-3 p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-border/50">
-                <div className="inline-flex items-center gap-2 rounded-full bg-student/15 text-student border border-student/30 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] mb-6">
-                  <Crown className="h-3 w-3" /> Formation complète
-                </div>
-
-                <h2 className="font-display text-4xl md:text-6xl font-bold leading-[1.05] mb-5">
-                  <span className="text-gradient-gold">Apprends.</span><br />
-                  <span className="italic font-light">Pratique.</span><br />
-                  Progresse.
-                </h2>
-
-                <p className="text-muted-foreground text-lg mb-8 max-w-md">
-                  {OFFERS.formation.description}
-                </p>
-
-                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3 mb-8">
-                  {[
-                    "Journal de trading complet",
-                    "Statistiques avancées",
-                    "Analyse fondamentale (news, sentiment)",
-                    "Exercices structurés et corrigés",
-                    "Feedback personnel du coach",
-                    "Accès illimité à vie",
-                  ].map((f) => (
-                    <div key={f} className="flex gap-2.5 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-student shrink-0 mt-0.5" />
-                      <span className="text-foreground/90">{f}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right: price + CTA */}
-              <div className="lg:col-span-2 p-8 md:p-12 flex flex-col justify-between bg-student/[0.03]">
-                <div>
-                  <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                    Investissement unique
-                  </div>
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <div className="font-display text-6xl font-bold text-gradient-gold">
-                      {formatFCFA(OFFERS.formation.price).replace(" FCFA", "")}
-                    </div>
-                    <div className="text-sm text-muted-foreground font-mono">FCFA</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground">paiement unique · accès à vie</div>
-
-                  <PromoBadge offerKey="formation" tone="gold" className="mt-4" />
-
-                  <div className="divider-glow my-6" />
-
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center gap-2.5 text-muted-foreground">
-                      <Sparkles className="h-3.5 w-3.5 text-student" />
-                      Économie vs abonnement annuel
-                    </div>
-                    <div className="flex items-center gap-2.5 text-muted-foreground">
-                      <GraduationCap className="h-3.5 w-3.5 text-student" />
-                      Inclut formation & coaching
-                    </div>
-                  </div>
-                </div>
-
-                <Button asChild size="lg" className="mt-8 w-full h-12 bg-gradient-gold text-student-foreground border-0 font-semibold glow-gold">
-                  <Link to="/payment?offer=formation">
-                    Rejoindre la formation <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* DIVIDER */}
-        <div className="flex items-center gap-4 max-w-4xl mx-auto">
-          <div className="h-px flex-1 bg-border/50" />
-          <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">ou</div>
-          <div className="h-px flex-1 bg-border/50" />
-        </div>
-
-        {/* ╔═══════════════════════════════════════════════════════╗
             ║  SUBSCRIBER PATH — Cyan/Blue                            ║
             ╚═══════════════════════════════════════════════════════╝ */}
         <section className="relative">
           <PathHeader
-            num="02"
+            num="01"
             tone="subscriber"
             label="Parcours Abonné"
             title="Suivre tes trades."
-            subtitle="Pour ceux qui savent trader et veulent juste un outil pro."
+            subtitle="Débutant comme pro : un outil pro pour progresser."
           />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -226,10 +125,10 @@ const Subscribe = () => {
                   <LineChart className="h-3 w-3" /> Inclus dans tous les abonnements
                 </div>
                 <h3 className="font-display text-2xl font-bold mb-2">
-                  Le cockpit complet,<br />sans la formation.
+                  Le cockpit complet,<br />pour 1 500 FCFA/mois.
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Tu profites du même outil pro que les étudiants, mais sans coaching ni exercices.
+                  Débutant ou pro, tu as accès à tout le journal et aux statistiques.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
