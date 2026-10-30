@@ -15,7 +15,8 @@ const Payment = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const offerKey = (params.get("offer") as OfferKey) || "sub_1m";
+  const rawOffer = params.get("offer") as OfferKey | null;
+  const offerKey: OfferKey = rawOffer && rawOffer !== "formation" && OFFERS[rawOffer] ? rawOffer : "sub_1m";
   const offer = OFFERS[offerKey];
 
   const [operator, setOperator] = useState<"mtn" | "orange">("mtn");

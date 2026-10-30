@@ -319,7 +319,7 @@ function PayoutDialog({
             </Select>
             <p className="text-[11px] text-muted-foreground mt-1">
               {method === "credit"
-                ? "Notre équipe utilisera ce montant pour prolonger ton abonnement ou formation."
+                ? "Notre équipe utilisera ce montant pour prolonger ton abonnement."
                 : "Tu recevras le montant sur ton numéro MoMo."}
             </p>
           </div>
