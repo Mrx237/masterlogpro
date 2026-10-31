@@ -770,6 +770,14 @@ export type Database = {
         Args: { _season: string; _user_id: string }
         Returns: undefined
       }
+      forum_members: {
+        Args: { _ids?: string[]; _search?: string }
+        Returns: {
+          full_name: string
+          id: string
+          username: string
+        }[]
+      }
       gen_affiliate_code: { Args: never; Returns: string }
       has_role: {
         Args: {
