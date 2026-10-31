@@ -570,7 +570,7 @@ function ForumChat({ id }: { id: string }) {
                           : "bg-surface-elevated border border-border/60 text-foreground rounded-tl-sm"
                       } ${isTopic ? "ring-1 ring-primary/30" : ""}`}
                     >
-                      {!isTopic && m.attachment_path && m.attachment_type && <div className="mb-2 max-w-full min-w-0"><MessageMedia path={m.attachment_path} kind={m.attachment_type} name={m.attachment_name} /></div>}
+                      {!isTopic && m.attachment_path && m.attachment_type && <div className="mb-2 w-64 max-w-full min-w-0"><MessageMedia path={m.attachment_path} kind={m.attachment_type} name={m.attachment_name} /></div>}
                       {isTopic ? (topic.content) : m.content}
 
                       {/* Hover actions */}
