@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { fr } from "date-fns/locale";
+import { MediaComposer } from "@/components/forum/MediaComposer";
+import { MessageMedia } from "@/components/forum/MessageMedia";
+import { validateForumMedia, type MediaKind } from "@/lib/forumMedia";
 
 type Category = "analyse" | "strategie" | "psychologie" | "question" | "general";
 
@@ -48,6 +51,9 @@ interface Topic {
 }
 
 interface Reply {
+  attachment_path?: string | null;
+  attachment_type?: MediaKind | null;
+  attachment_name?: string | null;
   id: string;
   user_id: string;
   content: string;
@@ -339,7 +345,6 @@ function ForumChat({ id }: { id: string }) {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [authors, setAuthors] = useState<Record<string, { full_name: string | null; email: string | null }>>({});
   const [loading, setLoading] = useState(true);
-  const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -408,21 +413,33 @@ function ForumChat({ id }: { id: string }) {
     bottomRef.current?.scrollIntoView({ behavior, block: "end" });
   }
 
-  async function send() {
-    if (!user) { toast.error("Connecte-toi pour participer"); navigate("/auth"); return; }
-    const c = text.trim();
-    if (!c) return;
+  async function send(c: string, file: File | null): Promise<boolean> {
+    if (!user) { toast.error("Connecte-toi pour participer"); navigate("/auth"); return false; }
+    if (posting || (!c && !file)) return false;
     setPosting(true);
-    const { data, error } = await db.from("forum_replies").insert({
-      topic_id: id, user_id: user.id, content: c,
-    }).select("*").single();
-    setPosting(false);
-    if (error) return toast.error(error.message);
-    setText("");
-    // Optimistic add (realtime may also push it)
-    setReplies((prev) => prev.some((x) => x.id === data.id) ? prev : [...prev, data]);
-    await ensureAuthors([user.id]);
-    setTimeout(() => scrollToBottom("smooth"), 30);
+    let path: string | null = null;
+    try {
+      let kind: MediaKind | null = null;
+      if (file) {
+        kind = validateForumMedia(file);
+        path = `${user.id}/${crypto.randomUUID()}`;
+        const { error } = await supabase.storage.from("forum-media").upload(path, file, { contentType: file.type.split(";")[0] });
+        if (error) throw error;
+      }
+      const { data, error } = await db.from("forum_replies").insert({
+        topic_id: id, user_id: user.id, content: c,
+        attachment_path: path, attachment_type: kind, attachment_name: file ? file.name.slice(0, 255) : null,
+      }).select("*").single();
+      if (error) throw error;
+      setReplies(prev => prev.some(x => x.id === data.id) ? prev : [...prev, data]);
+      await ensureAuthors([user.id]);
+      setTimeout(() => scrollToBottom("smooth"), 30);
+      return true;
+    } catch (error) {
+      if (path) await supabase.storage.from("forum-media").remove([path]);
+      toast.error(error instanceof Error ? error.message : (error as { message?: string }).message || "Envoi impossible. Réessaie.");
+      return false;
+    } finally { setPosting(false); }
   }
 
   async function toggleLike(target: "topic" | "reply", targetId: string, liked: boolean) {
@@ -440,6 +457,8 @@ function ForumChat({ id }: { id: string }) {
     if (!confirm("Supprimer ce message ?")) return;
     const { error } = await db.from("forum_replies").delete().eq("id", rid);
     if (error) return toast.error(error.message);
+    const removed = replies.find(r => r.id === rid);
+    if (removed?.attachment_path) await supabase.storage.from("forum-media").remove([removed.attachment_path]);
     setReplies((p) => p.filter((r) => r.id !== rid));
   }
 
@@ -536,7 +555,7 @@ function ForumChat({ id }: { id: string }) {
                       <Avatar name={author?.full_name} email={author?.email} userId={m.user_id} size={36} />
                     )}
                   </div>
-                  <div className={`flex flex-col max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
+                  <div className={`flex flex-col min-w-0 max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
                     {!sameAuthorAsPrev && (
                       <div className={`flex items-center gap-2 mb-1 text-xs ${mine ? "flex-row-reverse" : ""}`}>
                         <span className="font-semibold text-foreground/90">{mine ? "Toi" : authorName}</span>
@@ -551,6 +570,7 @@ function ForumChat({ id }: { id: string }) {
                           : "bg-surface-elevated border border-border/60 text-foreground rounded-tl-sm"
                       } ${isTopic ? "ring-1 ring-primary/30" : ""}`}
                     >
+                      {!isTopic && m.attachment_path && m.attachment_type && <div className="mb-2 max-w-full min-w-0"><MessageMedia path={m.attachment_path} kind={m.attachment_type} name={m.attachment_name} /></div>}
                       {isTopic ? (topic.content) : m.content}
 
                       {/* Hover actions */}
@@ -596,30 +616,7 @@ function ForumChat({ id }: { id: string }) {
       <div className="border-t border-border/60 bg-surface-elevated/40 backdrop-blur-xl sticky bottom-0">
         <div className="container max-w-3xl py-3">
           {user ? (
-            <form
-              onSubmit={(e) => { e.preventDefault(); send(); }}
-              className="flex items-end gap-2 glass rounded-2xl p-2 pl-4"
-            >
-              <Textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-                }}
-                placeholder={`Message dans #${catMeta(topic.category).label}...`}
-                rows={1}
-                maxLength={5000}
-                className="flex-1 min-h-[40px] max-h-[160px] resize-none border-0 bg-transparent focus-visible:ring-0 px-0 py-2 text-sm"
-              />
-              <Button
-                type="submit"
-                disabled={posting || !text.trim()}
-                size="icon"
-                className="bg-gradient-brand text-primary-foreground border-0 shrink-0 h-10 w-10 rounded-xl"
-              >
-                {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </form>
+            <MediaComposer posting={posting} onSend={send} placeholder={`Message dans #${catMeta(topic.category).label}...`} />
           ) : (
             <div className="glass rounded-2xl p-4 text-center">
               <p className="text-sm text-muted-foreground mb-2">Connecte-toi pour participer à la discussion.</p>
@@ -628,9 +625,6 @@ function ForumChat({ id }: { id: string }) {
               </Button>
             </div>
           )}
-          <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-            Entrée pour envoyer · Maj+Entrée pour aller à la ligne
-          </p>
         </div>
       </div>
     </div>
