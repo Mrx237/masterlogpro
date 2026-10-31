@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793485342114,
+      "tag": "0000_forum_message_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793485499053,
+      "tag": "0001_validate_forum_uploads",
+      "breakpoints": true
+    }
+  ]
+}
