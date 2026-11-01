@@ -217,6 +217,7 @@ const Payment = () => {
                   <div>
                     <div className="text-xs text-muted-foreground">Numéro {operator.toUpperCase()}</div>
                     <div className="text-lg font-mono font-bold">{targetNumber}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Nom : {PAYMENT_NAME}</div>
                   </div>
                   <Button size="sm" variant="outline" onClick={() => copy(targetNumber, "Numéro")}>
                     <Copy className="h-4 w-4" />
