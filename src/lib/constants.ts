@@ -1,8 +1,9 @@
 // Constantes business MasterLogPro
-export const WHATSAPP_NUMBER = "237679418262"; // sans +
+export const WHATSAPP_NUMBER = "237673492015"; // sans +
+export const PAYMENT_NAME = "Ngangni Samari Malachie";
 export const MOBILE_MONEY = {
   orange: "659703338",
-  mtn: "679418262",
+  mtn: "673492015",
   airtel: "—",
 };
 

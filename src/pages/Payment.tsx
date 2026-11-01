@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OFFERS, OfferKey, formatFCFA, MOBILE_MONEY, buildWhatsAppLink } from "@/lib/constants";
+import { OFFERS, OfferKey, formatFCFA, MOBILE_MONEY, PAYMENT_NAME, buildWhatsAppLink } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -217,6 +217,7 @@ const Payment = () => {
                   <div>
                     <div className="text-xs text-muted-foreground">Numéro {operator.toUpperCase()}</div>
                     <div className="text-lg font-mono font-bold">{targetNumber}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Nom : {PAYMENT_NAME}</div>
                   </div>
                   <Button size="sm" variant="outline" onClick={() => copy(targetNumber, "Numéro")}>
                     <Copy className="h-4 w-4" />
