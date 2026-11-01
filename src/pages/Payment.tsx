@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OFFERS, OfferKey, formatFCFA, MOBILE_MONEY, buildWhatsAppLink } from "@/lib/constants";
+import { OFFERS, OfferKey, formatFCFA, MOBILE_MONEY, PAYMENT_NAME, buildWhatsAppLink } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
