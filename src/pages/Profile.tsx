@@ -44,6 +44,7 @@ export default function Profile() {
 
   // identité
   const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [countryCode, setCountryCode] = useState<string>("");
   const [experience, setExperience] = useState<string>("");
@@ -73,11 +74,12 @@ export default function Profile() {
     (async () => {
       const { data: p } = await supabase
         .from("profiles")
-        .select("full_name, country_code, trading_experience, trading_style, daily_loss_limit, max_risk_per_trade, weekly_trade_target, best_streak")
+        .select("full_name, username, country_code, trading_experience, trading_style, daily_loss_limit, max_risk_per_trade, weekly_trade_target, best_streak")
         .eq("id", user.id)
         .maybeSingle();
       if (p) {
         setFullName(p.full_name ?? "");
+        setUsername((p as any).username ?? "");
         setCountryCode(p.country_code ?? "");
         setExperience((p as any).trading_experience ?? "");
         setTradingStyle((p as any).trading_style ?? "");
@@ -125,10 +127,13 @@ export default function Profile() {
   async function saveIdentity() {
     const p = nameSchema.safeParse(fullName);
     if (!p.success) return toast.error(p.error.errors[0].message);
+    const u = username.trim().replace(/^@/, "").toLowerCase();
+    if (u && !/^[a-z0-9_]{3,30}$/.test(u)) return toast.error("Nom d’utilisateur : 3 à 30 lettres, chiffres ou _");
     const c = COUNTRIES.find((x) => x.code === countryCode);
     setSavingProfile(true);
     const { error } = await supabase.from("profiles").update({
       full_name: p.data,
+      username: u || null,
       country_code: countryCode || null,
       country_name: c?.name ?? null,
       continent: c?.continent ?? null,
@@ -136,7 +141,8 @@ export default function Profile() {
       trading_experience: experience || null,
     } as any).eq("id", user!.id);
     setSavingProfile(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(error.code === "23505" ? "Ce nom d’utilisateur est déjà pris" : error.message);
+    setUsername(u);
     toast.success("Profil mis à jour");
   }
 
@@ -238,6 +244,10 @@ export default function Profile() {
           <div className="grid gap-4">
             <Field label="Nom complet">
               <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-11 bg-[hsl(226_60%_5%)] border-border focus:border-primary" />
+            </Field>
+
+            <Field label="Nom d’utilisateur (pour être tagué @ dans le forum)">
+              <Input value={username} onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))} placeholder="ex: trader_pro" maxLength={31} className="h-11 bg-[hsl(226_60%_5%)] border-border focus:border-primary" />
             </Field>
 
             <Field label="Pays">
