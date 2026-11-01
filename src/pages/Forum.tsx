@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { fr } from "date-fns/locale";
+import { MentionText } from "@/components/forum/MentionText";
 import { MediaComposer } from "@/components/forum/MediaComposer";
 import { MessageMedia } from "@/components/forum/MessageMedia";
 import { validateForumMedia, type MediaKind } from "@/lib/forumMedia";
@@ -343,7 +344,7 @@ function ForumChat({ id }: { id: string }) {
   const navigate = useNavigate();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
-  const [authors, setAuthors] = useState<Record<string, { full_name: string | null; email: string | null }>>({});
+  const [authors, setAuthors] = useState<Record<string, { full_name: string | null; email?: string | null; username?: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -353,9 +354,10 @@ function ForumChat({ id }: { id: string }) {
     const missing = ids.filter((i) => i && !authors[i]);
     if (!missing.length) return;
     const { data } = await db.from("profiles").select("id, full_name, email").in("id", missing);
-    if (data) {
-      setAuthors((prev) => ({ ...prev, ...Object.fromEntries(data.map((p: any) => [p.id, p])) }));
-    }
+    const { data: names } = await db.rpc("forum_members", { _ids: missing });
+    const un = Object.fromEntries((names ?? []).map((n: any) => [n.id, n]));
+    const rows = missing.map((i) => ({ ...(data ?? []).find((p: any) => p.id === i), ...un[i] }));
+    setAuthors((prev) => ({ ...prev, ...Object.fromEntries(rows.map((p: any) => [p.id, p])) }));
   }
 
   async function load() {
@@ -365,8 +367,12 @@ function ForumChat({ id }: { id: string }) {
     const { data: rs } = await db.from("forum_replies").select("*").eq("topic_id", id).order("created_at", { ascending: true });
     const rList = (rs ?? []) as Reply[];
     const ids = Array.from(new Set<string>([t.user_id, ...rList.map((r) => r.user_id)]));
-    const { data: profs } = await db.from("profiles").select("id, full_name, email").in("id", ids);
-    setAuthors(Object.fromEntries((profs ?? []).map((p: any) => [p.id, p])));
+    const [{ data: profs }, { data: names }] = await Promise.all([
+      db.from("profiles").select("id, full_name, email").in("id", ids),
+      db.rpc("forum_members", { _ids: ids }),
+    ]);
+    const pm = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
+    setAuthors(Object.fromEntries((names ?? []).map((n: any) => [n.id, { ...pm[n.id], ...n, full_name: n.full_name ?? pm[n.id]?.full_name ?? null }])));
     let likedTopic = false; const replyLikes = new Set<string>();
     if (user) {
       const { data: tLike } = await db.from("forum_likes").select("id").eq("user_id", user.id)
@@ -558,7 +564,7 @@ function ForumChat({ id }: { id: string }) {
                   <div className={`flex flex-col min-w-0 max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
                     {!sameAuthorAsPrev && (
                       <div className={`flex items-center gap-2 mb-1 text-xs ${mine ? "flex-row-reverse" : ""}`}>
-                        <span className="font-semibold text-foreground/90">{mine ? "Toi" : authorName}</span>
+                        <span className="font-semibold text-foreground/90">{mine ? "Toi" : authorName}</span>{author?.username && <span className="text-primary/80">@{author.username}</span>}
                         <span className="text-muted-foreground">{smartDate(m.created_at)}</span>
                         {isTopic && <Badge variant="secondary" className="h-4 text-[9px] uppercase tracking-wider">Sujet</Badge>}
                       </div>
@@ -571,7 +577,7 @@ function ForumChat({ id }: { id: string }) {
                       } ${isTopic ? "ring-1 ring-primary/30" : ""}`}
                     >
                       {!isTopic && m.attachment_path && m.attachment_type && <div className="mb-2 w-64 max-w-full min-w-0"><MessageMedia path={m.attachment_path} kind={m.attachment_type} name={m.attachment_name} /></div>}
-                      {isTopic ? (topic.content) : m.content}
+                      <MentionText text={isTopic ? topic.content : m.content} />
 
                       {/* Hover actions */}
                       <div className={`absolute -top-3 ${mine ? "left-2" : "right-2"} opacity-0 group-hover:opacity-100 transition flex items-center gap-1 bg-background border border-border/60 rounded-full px-1.5 py-0.5 shadow`}>

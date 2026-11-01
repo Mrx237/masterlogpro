@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImagePlus, Video, Mic, Square, X, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { validateForumMedia } from "@/lib/forumMedia";
+import { supabase } from "@/integrations/supabase/client";
 
 export function MediaComposer({ posting, onSend, placeholder }: { posting: boolean; onSend: (text: string, file: File | null) => Promise<boolean>; placeholder: string }) {
   const [text, setText] = useState("");
@@ -12,6 +13,15 @@ export function MediaComposer({ posting, onSend, placeholder }: { posting: boole
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [requesting, setRequesting] = useState(false);
+  const [suggest, setSuggest] = useState<{ id: string; username: string; full_name: string | null }[]>([]);
+  const mention = /(?:^|\s)@([a-z0-9_]{1,30})$/i.exec(text)?.[1] ?? null;
+  useEffect(() => {
+    if (!mention) { setSuggest([]); return; }
+    let on = true;
+    const t = window.setTimeout(() => { (supabase as any).rpc("forum_members", { _search: mention }).then(({ data }: any) => { if (on) setSuggest(data ?? []); }); }, 200);
+    return () => { on = false; clearTimeout(t); };
+  }, [mention]);
+  function pick(u: string) { setText(v => v.replace(/@([a-z0-9_]{1,30})$/i, `@${u} `)); setSuggest([]); }
   const input = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -73,7 +83,10 @@ export function MediaComposer({ posting, onSend, placeholder }: { posting: boole
       {kind !== "audio" && <span className="text-xs text-muted-foreground truncate flex-1">{file.name}</span>}
       <Button type="button" size="icon" variant="ghost" aria-label="Retirer le média" title="Retirer le média" disabled={posting} onClick={() => setFile(null)} className="shrink-0"><X className="h-4 w-4" /></Button>
     </div>}
-    {recording ? <div role="status" className="flex items-center gap-2 p-2 text-destructive"><Mic className="h-4 w-4 motion-safe:animate-pulse" />Enregistrement · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</div> : <Textarea aria-label="Message" value={text} disabled={posting || requesting} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void submit(); } }} placeholder={placeholder} rows={2} maxLength={5000} className="min-h-14 max-h-40 resize-none border-0 bg-transparent focus-visible:ring-0 text-sm" />}
+    {suggest.length > 0 && <ul role="listbox" aria-label="Suggestions de membres" className="rounded-md border border-border bg-popover max-h-48 overflow-auto">
+      {suggest.map(m => <li key={m.id}><button type="button" onClick={() => pick(m.username)} className="w-full text-left px-3 py-2 text-sm hover:bg-muted"><span className="text-primary font-semibold">@{m.username}</span>{m.full_name && <span className="text-muted-foreground ml-2">{m.full_name}</span>}</button></li>)}
+    </ul>}
+    {recording ? <div role="status" className="flex items-center gap-2 p-2 text-destructive"><Mic className="h-4 w-4 motion-safe:animate-pulse" />Enregistrement · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</div> : <Textarea aria-label="Message" value={text} disabled={posting || requesting} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && suggest.length) { e.preventDefault(); pick(suggest[0].username); return; } if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void submit(); } }} placeholder={placeholder} rows={2} maxLength={5000} className="min-h-14 max-h-40 resize-none border-0 bg-transparent focus-visible:ring-0 text-sm" />}
     <div className="flex items-center gap-1">
       <Button type="button" variant="ghost" size="icon" title="Joindre une photo" aria-label="Joindre une photo" disabled={posting || recording || requesting} onClick={() => { if (input.current) { input.current.accept = "image/jpeg,image/png,image/webp,image/gif"; input.current.click(); } }}><ImagePlus className="h-5 w-5" /></Button>
       <Button type="button" variant="ghost" size="icon" title="Joindre une vidéo" aria-label="Joindre une vidéo" disabled={posting || recording || requesting} onClick={() => { if (input.current) { input.current.accept = "video/mp4,video/webm,video/quicktime"; input.current.click(); } }}><Video className="h-5 w-5" /></Button>
