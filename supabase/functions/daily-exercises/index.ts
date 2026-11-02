@@ -31,22 +31,7 @@ Deno.serve(async (req) => {
     let created = 0;
 
     for (const cat of todo) {
-      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: "Tu es un coach de trading Forex francophone. Tu crées des exercices pratiques, concrets et courts." },
-            { role: "user", content: `Crée un exercice du jour (${today}) de niveau ${level} sur le thème : ${CATS[cat]}. Varie les sujets. Donne un titre court et une consigne claire (5-10 lignes) avec un scénario concret et des questions précises auxquelles le trader doit répondre par écrit.` },
-          ],
-          tools: [{ type: "function", function: { name: "exercise", parameters: { type: "object", properties: { title: { type: "string" }, instructions: { type: "string" } }, required: ["title", "instructions"] } } }],
-          tool_choice: { type: "function", function: { name: "exercise" } },
-        }),
-      });
-      if (!r.ok) throw new Error(`AI ${r.status}: ${await r.text()}`);
-      const d = await r.json();
-      const args = JSON.parse(d.choices[0].message.tool_calls[0].function.arguments);
+      const args = await generate(`Crée un exercice du jour (${today}) de niveau ${level} sur le thème : ${CATS[cat]}. Varie les sujets. Donne un titre court et une consigne claire (5-10 lignes) avec un scénario concret et des questions précises auxquelles le trader doit répondre par écrit.`);
       const { error } = await admin.from("exercises").insert({
         title: args.title, instructions: args.instructions, level, category: cat,
         daily_date: today, is_published: true, created_by: adm.user_id,
@@ -61,4 +46,43 @@ Deno.serve(async (req) => {
 
 function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
+}
+
+async function generate(prompt: string): Promise<{ title: string; instructions: string }> {
+  const r = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    method: "POST",
+    headers: {
+      "Lovable-API-Key": Deno.env.get("LOVABLE_API_KEY")!,
+      "Content-Type": "application/json",
+      "X-Lovable-AIG-SDK": "fetch",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-6-astra",
+      stream: true,
+      store: false,
+      reasoning: { effort: "low" },
+      instructions: "Tu es un coach de trading Forex francophone. Tu crées des exercices pratiques, concrets et courts.",
+      input: prompt,
+      text: { format: { type: "json_schema", name: "exercise", strict: true, schema: {
+        type: "object", additionalProperties: false, required: ["title", "instructions"],
+        properties: { title: { type: "string" }, instructions: { type: "string" } },
+      } } },
+    }),
+  });
+  if (!r.ok || !r.body) throw new Error(`AI ${r.status}: ${await r.text()}`);
+  const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buf = "", out = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += value;
+    const lines = buf.split("\n"); buf = lines.pop() ?? "";
+    for (const l of lines) {
+      if (!l.startsWith("data:")) continue;
+      const d = l.slice(5).trim();
+      if (!d || d === "[DONE]") continue;
+      try { const ev = JSON.parse(d); if (ev.type === "response.output_text.delta") out += ev.delta; } catch { /* ignore */ }
+    }
+  }
+  return JSON.parse(out);
 }
