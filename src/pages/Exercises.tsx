@@ -69,11 +69,15 @@ const Exercises = () => {
       status: "submitted" as const,
       submitted_at: new Date().toISOString(),
     }, { onConflict: "exercise_id,user_id" });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    const t = toast.loading("Correction par le coach IA…");
+    const { data, error: gErr } = await supabase.functions.invoke("grade-exercise", { body: { exercise_id: active.id } });
     setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Réponse envoyée — le coach va la corriger.");
-    setActive(null);
-    load();
+    toast.dismiss(t);
+    if (gErr || data?.error) toast.error(data?.error ?? "Correction impossible pour le moment.");
+    else toast.success(`Corrigé : ${data?.grade ?? "?"}/20`);
+    await load();
+    setActive((a) => a);
   }
 
   if (!hasJournalAccess && !isAdmin) {
