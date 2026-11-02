@@ -246,8 +246,10 @@ export type Database = {
       }
       exercises: {
         Row: {
+          category: string | null
           created_at: string
           created_by: string
+          daily_date: string | null
           id: string
           instructions: string
           is_published: boolean
@@ -256,8 +258,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by: string
+          daily_date?: string | null
           id?: string
           instructions: string
           is_published?: boolean
@@ -266,8 +270,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string
+          daily_date?: string | null
           id?: string
           instructions?: string
           is_published?: boolean

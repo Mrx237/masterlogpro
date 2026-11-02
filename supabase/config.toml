@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.nowpayments-webhook]
 verify_jwt = false
+
+[functions.daily-exercises]
+verify_jwt = false

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 interface Exercise {
   id: string; title: string; instructions: string; level: "debutant" | "intermediaire" | "avance"; created_at: string;
+  category: "technique" | "fondamental" | "psychologie" | null; daily_date: string | null;
 }
 interface Submission {
   id: string; exercise_id: string; status: "pending" | "submitted" | "graded";
@@ -22,7 +23,8 @@ interface Submission {
 }
 
 const Exercises = () => {
-  const { user, isStudent, isAdmin } = useAuth();
+  const { user, isAdmin, hasJournalAccess } = useAuth();
+  const [cat, setCat] = useState<"all" | "technique" | "fondamental" | "psychologie">("all");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [subs, setSubs] = useState<Record<string, Submission>>({});
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,9 @@ const Exercises = () => {
   async function load() {
     if (!user) return;
     setLoading(true);
+    const today = new Date().toISOString().slice(0, 10);
+    const { count } = await supabase.from("exercises").select("id", { count: "exact", head: true }).eq("daily_date", today);
+    if (!count || count < 3) await supabase.functions.invoke("daily-exercises").catch(() => {});
     const [{ data: ex }, { data: ms }] = await Promise.all([
       supabase.from("exercises").select("*").eq("is_published", true).order("created_at", { ascending: false }),
       supabase.from("exercise_submissions").select("*").eq("user_id", user.id),
@@ -71,16 +76,16 @@ const Exercises = () => {
     load();
   }
 
-  if (!isStudent && !isAdmin) {
+  if (!hasJournalAccess && !isAdmin) {
     return (
       <div className="min-h-screen bg-background">
         <AppHeader />
         <main className="container py-12">
           <Card className="glass p-10 text-center max-w-md mx-auto">
             <BookOpen className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-            <h2 className="font-display text-xl font-bold mb-2">Réservé aux élèves</h2>
-            <p className="text-sm text-muted-foreground mb-5">Les exercices font partie de la formation. Rejoins-la pour y accéder.</p>
-            <Button asChild className="bg-gradient-gold text-student-foreground border-0"><Link to="/subscribe?offer=formation">Rejoindre la formation</Link></Button>
+            <h2 className="font-display text-xl font-bold mb-2">Réservé aux abonnés</h2>
+            <p className="text-sm text-muted-foreground mb-5">Abonne-toi pour recevoir chaque jour des exercices technique, fondamental et psychologie.</p>
+            <Button asChild className="bg-gradient-gold text-student-foreground border-0"><Link to="/subscribe">S'abonner</Link></Button>
           </Card>
         </main>
       </div>
@@ -100,7 +105,7 @@ const Exercises = () => {
         <div>
           <Link to="/dashboard" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2"><ArrowLeft className="h-3 w-3" /> Dashboard</Link>
           <h1 className="font-display text-3xl md:text-4xl font-bold">Exercices</h1>
-          <p className="text-sm text-muted-foreground mt-1">Pratique. Soumets. Reçois la correction du coach.</p>
+          <p className="text-sm text-muted-foreground mt-1">3 nouveaux exercices chaque jour : technique, fondamental et psychologie.</p>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -115,13 +120,24 @@ const Exercises = () => {
           <Card className="glass p-12 text-center text-sm text-muted-foreground">Aucun exercice publié pour le moment.</Card>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
-            {exercises.map((ex) => {
+            <div className="md:col-span-2 flex flex-wrap gap-2">
+              {(["all", "technique", "fondamental", "psychologie"] as const).map((c) => (
+                <Button key={c} size="sm" variant={cat === c ? "default" : "outline"} onClick={() => setCat(c)}>
+                  {{ all: "Tous", technique: "📈 Technique", fondamental: "📰 Fondamental", psychologie: "🧠 Psychologie" }[c]}
+                </Button>
+              ))}
+            </div>
+            {exercises.filter((e) => cat === "all" || e.category === cat).map((ex) => {
               const s = subs[ex.id];
               const status = s?.status ?? "pending";
               return (
                 <button key={ex.id} onClick={() => open(ex)} className="glass rounded-xl p-5 text-left hover:-translate-y-0.5 transition-all hover:ring-gold">
                   <div className="flex items-start justify-between mb-2">
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{ex.level}</Badge>
+                    <div className="flex gap-1 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{ex.level}</Badge>
+                      {ex.category && <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{ex.category}</Badge>}
+                      {ex.daily_date === new Date().toISOString().slice(0, 10) && <Badge className="text-[10px]">Du jour</Badge>}
+                    </div>
                     <SubBadge status={status} />
                   </div>
                   <h3 className="font-display text-lg font-bold mb-1">{ex.title}</h3>
