@@ -60,7 +60,7 @@ export function useAuth() {
   }
 
   const isAdmin = roles.includes("admin");
-  const isStudent = roles.includes("student");
+  const isStudent = false; // statut étudiant supprimé
   const isSubscriber = roles.includes("subscriber");
   const hasJournalAccess =
     isAdmin || isStudent || isSubscriber || profile?.status === "active";

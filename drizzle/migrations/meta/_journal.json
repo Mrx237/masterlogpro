@@ -29,6 +29,13 @@
       "when": 1793617554033,
       "tag": "0003_daily_exercises",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793695539983,
+      "tag": "0004_commission_500_no_student",
+      "breakpoints": true
     }
   ]
 }

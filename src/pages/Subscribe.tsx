@@ -38,7 +38,7 @@ const Subscribe = () => {
             <span className="text-gradient-brand">Pour tous les traders.</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-            1 500 FCFA par mois, du débutant au pro. Paiement Mobile Money, activation en 5 minutes.
+            2 500 FCFA par mois, du débutant au pro. Paiement Mobile Money, activation en 5 minutes.
           </p>
         </div>
       </section>
@@ -125,7 +125,7 @@ const Subscribe = () => {
                   <LineChart className="h-3 w-3" /> Inclus dans tous les abonnements
                 </div>
                 <h3 className="font-display text-2xl font-bold mb-2">
-                  Le cockpit complet,<br />pour 1 500 FCFA/mois.
+                  Le cockpit complet,<br />pour 2 500 FCFA/mois.
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Débutant ou pro, tu as accès à tout le journal et aux statistiques.
