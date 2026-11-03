@@ -4,3 +4,8 @@
 - [x] Verify authenticated sending and playback, and small-screen layout.
 # Forum usernames
 - [x] Username field in profile, @name shown in forum, mention highlight and suggestions.
+
+# SoleasPay payments
+- [ ] Verify official checkout and payment confirmation documentation.
+- [ ] Connect the SoleasPay merchant account securely.
+- [ ] Integrate and verify checkout, subscription activation and affiliate commissions.
