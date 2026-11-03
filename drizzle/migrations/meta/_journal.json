@@ -43,6 +43,13 @@
       "when": 1793699035461,
       "tag": "0005_guard_manual_payment_review",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793700363794,
+      "tag": "0006_tighten_shared_read_policies",
+      "breakpoints": true
     }
   ]
 }
