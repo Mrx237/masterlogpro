@@ -6,6 +6,7 @@
 - [x] Username field in profile, @name shown in forum, mention highlight and suggestions.
 
 # SoleasPay payments
-- [ ] Verify official checkout and payment confirmation documentation.
-- [ ] Connect the SoleasPay merchant account securely.
-- [ ] Integrate and verify checkout, subscription activation and affiliate commissions.
+- [x] Research official v4 checkout, authentication and payment status documentation.
+- [ ] Connect the SoleasPay merchant account securely — awaiting merchant application credentials and test/live choice.
+- [ ] Confirm the hosted-checkout status request contract (/merchand/status) before automated approval.
+- [ ] Integrate and verify checkout, subscription activation and affiliate commissions — blocked by the merchant connection and status contract.
