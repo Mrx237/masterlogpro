@@ -556,13 +556,14 @@ function PaymentsTab() {
     if (!active || !canReviewManualPayment(active.status)) return;
     setBusy(true);
 
-    const { error } = await supabase.from("payment_requests").update({
+    const { data, error } = await supabase.from("payment_requests").update({
       status: approve ? "approved" : "rejected",
       admin_note: adminNote || null,
       reviewed_at: new Date().toISOString(),
     }).eq("id", active.id).eq("status", "pending").select("id").maybeSingle();
 
     if (error) { toast.error(error.message); setBusy(false); return; }
+    if (!data) { toast.error("Cette demande a déjà été examinée. Actualise la liste."); setActive(null); setBusy(false); void load(); return; }
 
     toast.success(approve ? "Compte activé ✅" : "Demande rejetée");
     setActive(null);
