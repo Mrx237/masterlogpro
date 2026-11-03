@@ -1,5 +1,6 @@
 // Génère chaque jour 3 exercices (technique, fondamental, psychologie) via Lovable AI.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getCaller } from "../_shared/auth.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const caller = await getCaller(req, admin);
+    if (!caller) return json({ error: "Non autorisé" }, 401);
     const today = new Date().toISOString().slice(0, 10);
 
     const { data: existing } = await admin.from("exercises").select("category").eq("daily_date", today);

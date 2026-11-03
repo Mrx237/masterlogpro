@@ -2,6 +2,7 @@
 // une synthèse "expert finance" par devise (biais, news clés, paires).
 // PUBLIC : accessible aux élèves & abonnés sans rôle admin.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getCaller } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,6 +41,8 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const caller = await getCaller(req, admin);
+    if (!caller?.hasAccess) return new Response(JSON.stringify({ error: "Non autorisé" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const now = new Date();
     const start = new Date(now); start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0);

@@ -1,6 +1,7 @@
 // Sync economic calendar from Finnhub into economic_news.
 // PUBLIC endpoint (no auth) so cron + frontend refresh button can call it.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getCaller, hasJobToken } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,10 @@ Deno.serve(async (req) => {
     };
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    if (!(await hasJobToken(req, admin, "fetch_news"))) {
+      const caller = await getCaller(req, admin);
+      if (!caller?.hasAccess) return new Response(JSON.stringify({ error: "Non autorisé" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const now = new Date();
     const fallbackFrom = new Date(now.getTime() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
