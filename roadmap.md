@@ -5,8 +5,8 @@
 # Forum usernames
 - [x] Username field in profile, @name shown in forum, mention highlight and suggestions.
 
-# SoleasPay payments
-- [x] Research official v4 checkout, authentication and payment status documentation.
-- [ ] Connect the SoleasPay merchant account securely — awaiting merchant application credentials and test/live choice.
-- [ ] Confirm the hosted-checkout status request contract (/merchand/status) before automated approval.
-- [ ] Integrate and verify checkout, subscription activation and affiliate commissions — blocked by the merchant connection and status contract.
+# Manual Mobile Money payments
+- [x] Improve transfer submission and persisted request tracking.
+- [x] Inspect live administrator policies and activation trigger; remove duplicate client-side activation.
+- [x] Test authenticated declaration, reload and rejection readback; payment rules tests pass.
+- [ ] Exercise approval through the admin page — requires an authorized admin session; current session is a non-admin member.

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { OFFERS, OfferKey, formatFCFA } from "@/lib/constants";
+import { canReviewManualPayment } from "@/lib/manualPayments";
 import { toast } from "sonner";
 import { Loader2, ExternalLink, Shield, ShieldOff, UserCheck, UserX, TrendingUp, TrendingDown, UserPlus, Copy } from "lucide-react";
 
@@ -21,6 +22,7 @@ interface PaymentRow {
   id: string; user_id: string; offer: OfferKey; amount_fcfa: number; method: string;
   payer_phone: string | null; proof_path: string | null; status: string; note: string | null;
   created_at: string; admin_note: string | null;
+  provider_tx_id: string | null;
   profiles?: { email: string | null; full_name: string | null } | null;
 }
 
@@ -551,33 +553,17 @@ function PaymentsTab() {
   }
 
   async function decide(approve: boolean) {
-    if (!active) return;
+    if (!active || !canReviewManualPayment(active.status)) return;
     setBusy(true);
 
-    const { error } = await supabase.from("payment_requests").update({
+    const { data, error } = await supabase.from("payment_requests").update({
       status: approve ? "approved" : "rejected",
       admin_note: adminNote || null,
       reviewed_at: new Date().toISOString(),
-    }).eq("id", active.id);
+    }).eq("id", active.id).eq("status", "pending").select("id").maybeSingle();
 
     if (error) { toast.error(error.message); setBusy(false); return; }
-
-    if (approve) {
-      const offer = OFFERS[active.offer];
-      const role = offer.type === "formation" ? "student" : "subscriber";
-      const ends = offer.durationDays
-        ? new Date(Date.now() + offer.durationDays * 86400000).toISOString()
-        : null;
-
-      await supabase.from("user_roles").upsert(
-        { user_id: active.user_id, role: role as any },
-        { onConflict: "user_id,role" }
-      );
-      await supabase.from("profiles").update({
-        status: "active",
-        subscription_ends_at: ends,
-      }).eq("id", active.user_id);
-    }
+    if (!data) { toast.error("Cette demande a déjà été examinée. Actualise la liste."); setActive(null); setBusy(false); void load(); return; }
 
     toast.success(approve ? "Compte activé ✅" : "Demande rejetée");
     setActive(null);
@@ -638,6 +624,8 @@ function PaymentsTab() {
               <Row k="Offre" v={`${OFFERS[active.offer]?.label} — ${formatFCFA(active.amount_fcfa)}`} />
               <Row k="Méthode" v={active.method.toUpperCase()} />
               <Row k="N° payeur" v={active.payer_phone ?? "—"} />
+              <Row k="ID transaction" v={active.provider_tx_id ?? "—"} />
+              <Row k="Référence demande" v={active.id} />
               {active.note && <Row k="Note" v={active.note} />}
               {proofUrl ? (
                 <div>
@@ -655,8 +643,8 @@ function PaymentsTab() {
             </div>
           )}
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => decide(false)} disabled={busy}>Rejeter</Button>
-            <Button onClick={() => decide(true)} disabled={busy}>
+            <Button variant="outline" onClick={() => decide(false)} disabled={busy || !active || !canReviewManualPayment(active.status)}>Rejeter</Button>
+            <Button onClick={() => decide(true)} disabled={busy || !active || !canReviewManualPayment(active.status)}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}Valider et activer
             </Button>
           </DialogFooter>
@@ -667,7 +655,7 @@ function PaymentsTab() {
 }
 
 const Row = ({ k, v }: { k: string; v: string }) => (
-  <div className="flex justify-between gap-4 border-b pb-1.5"><span className="text-muted-foreground">{k}</span><span className="text-right font-medium">{v}</span></div>
+  <div className="flex justify-between gap-4 border-b pb-1.5"><span className="text-muted-foreground">{k}</span><span className="min-w-0 break-words text-right font-medium">{v}</span></div>
 );
 
 export default Admin;
