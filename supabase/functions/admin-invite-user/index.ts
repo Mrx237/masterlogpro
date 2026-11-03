@@ -58,7 +58,8 @@ Deno.serve(async (req) => {
 
     if (!targetUser) {
       // Create new user with temp password
-      tempPassword = `MLP-${Math.random().toString(36).slice(2, 10)}-${Math.floor(Math.random() * 9999)}`;
+      const bytes = crypto.getRandomValues(new Uint8Array(18));
+      tempPassword = "MLP-" + btoa(String.fromCharCode(...bytes)).replace(/[+/=]/g, "").slice(0, 22);
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
         password: tempPassword,

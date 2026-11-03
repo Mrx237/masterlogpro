@@ -29,7 +29,12 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
     const email = userData.user.email;
 
-    const { offer, success_url, cancel_url } = await req.json();
+    const { offer } = await req.json();
+    const origin = req.headers.get("origin") ?? "";
+    const ALLOWED = [/^https:\/\/masterlogpro\.lovable\.app$/, /^https:\/\/[a-z0-9-]+--affe7e4b-c37b-44e0-bde9-f4fcdc7460c7\.lovable\.app$/, /^https:\/\/affe7e4b-c37b-44e0-bde9-f4fcdc7460c7\.lovableproject\.com$/, /^http:\/\/localhost:\d+$/, /^capacitor:\/\/localhost$/, /^https?:\/\/localhost$/];
+    const base = ALLOWED.some((r) => r.test(origin)) ? origin : "https://masterlogpro.lovable.app";
+    const success_url = `${base}/dashboard?paid=1`;
+    const cancel_url = `${base}/payment?offer=${encodeURIComponent(String(offer ?? ""))}`;
     const cfg = typeof offer === "string" ? cryptoOffer(offer) : null;
     if (!cfg) return json({ error: "Offre invalide" }, 400);
 
