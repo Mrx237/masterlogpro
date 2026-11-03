@@ -396,6 +396,24 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_job_tokens: {
+        Row: {
+          created_at: string
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           admin_note: string | null
@@ -785,6 +803,7 @@ export type Database = {
         }[]
       }
       gen_affiliate_code: { Args: never; Returns: string }
+      has_journal_access: { Args: { _uid: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
