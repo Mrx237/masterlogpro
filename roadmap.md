@@ -10,3 +10,8 @@
 - [x] Inspect live administrator policies and activation trigger; remove duplicate client-side activation.
 - [x] Test authenticated declaration, reload and rejection readback; payment rules tests pass.
 - [ ] Exercise approval through the admin page — requires an authorized admin session; current session is a non-admin member.
+
+# Crypto payment repair
+- [ ] Reproduce and diagnose crypto checkout failure.
+- [ ] Repair affected checkout and notification handling.
+- [ ] Verify authenticated checkout and payment amount rules.
