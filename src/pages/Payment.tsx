@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { OFFERS, OfferKey, formatFCFA, MOBILE_MONEY, PAYMENT_NAME, buildWhatsAppLink } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { normalizePaymentPhone } from "@/lib/manualPayments";
 import { toast } from "sonner";
-import { Loader2, Smartphone, ArrowLeft, Bitcoin, Copy, CheckCircle2, MessageCircle, Wallet } from "lucide-react";
+import { Loader2, Smartphone, ArrowLeft, Bitcoin, Copy, CheckCircle2, MessageCircle, Wallet, Clock, RefreshCw } from "lucide-react";
+
+type TransferRequest = { id: string; status: string; admin_note: string | null; provider_tx_id: string | null; payer_phone: string | null; method: string };
 
 const Payment = () => {
   const [params] = useSearchParams();
@@ -23,13 +26,13 @@ const Payment = () => {
   const [payerPhone, setPayerPhone] = useState("");
   const [txRef, setTxRef] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState<{ id: string } | null>(null);
+  const [submitted, setSubmitted] = useState<TransferRequest | null>(null);
+  const [requestLoading, setRequestLoading] = useState(true);
 
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [cryptoInvoiceUrl, setCryptoInvoiceUrl] = useState<string | null>(null);
 
   const [credit, setCredit] = useState<number>(0);
-  const [creditLoading, setCreditLoading] = useState(false);
   const [payingCredit, setPayingCredit] = useState(false);
 
   useEffect(() => {
@@ -48,18 +51,38 @@ const Payment = () => {
     })();
   }, [user, submitted]);
 
+  async function refreshRequest() {
+    if (!user) return;
+    setRequestLoading(true);
+    const { data, error } = await supabase.from("payment_requests")
+      .select("id,status,admin_note,provider_tx_id,payer_phone,method")
+      .eq("user_id", user.id).eq("offer", offerKey).eq("provider", "manual")
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (error) toast.error("Impossible de charger le suivi du transfert.");
+    else setSubmitted(data);
+    setRequestLoading(false);
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    void refreshRequest();
+  }, [user?.id, offerKey]);
+
   if (!offer) return null;
 
   const targetNumber = operator === "mtn" ? MOBILE_MONEY.mtn : MOBILE_MONEY.orange;
 
-  function copy(text: string, label: string) {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copié`);
+  async function copy(text: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copié`);
+    } catch { toast.error("Copie indisponible : sélectionne le numéro manuellement."); }
   }
 
   async function submitMomo() {
     if (!user) return;
-    if (payerPhone.replace(/\D/g, "").length < 9) { toast.error("Ton numéro est invalide"); return; }
+    const phone = normalizePaymentPhone(payerPhone);
+    if (!/^6\d{8}$/.test(phone)) { toast.error("Entre un numéro camerounais valide à 9 chiffres"); return; }
     if (txRef.trim().length < 4) { toast.error("Entre l'ID de la transaction Mobile Money"); return; }
 
     setSubmitting(true);
@@ -75,16 +98,16 @@ const Payment = () => {
           method: operator,
           provider: "manual",
           status: "pending",
-          payer_phone: payerPhone,
+          payer_phone: phone,
           provider_tx_id: txRef.trim(),
           note: `Paiement Mobile Money ${operator.toUpperCase()} vers ${targetNumber}`,
         })
-        .select("id")
+        .select("id,status,admin_note,provider_tx_id,payer_phone,method")
         .single();
       if (error) throw error;
 
-      setSubmitted({ id: data.id });
-      toast.success("Demande envoyée — activation sous peu après vérification.");
+      setSubmitted(data);
+      toast.success("Transfert déclaré — en attente de validation.");
     } catch (e: any) {
       toast.error(e.message || "Erreur lors de l'envoi");
     } finally {
@@ -134,7 +157,7 @@ const Payment = () => {
   }
 
   const waMessage = submitted
-    ? `Bonjour, je viens d'envoyer ${formatFCFA(offer.price)} via ${operator.toUpperCase()} Mobile Money pour l'offre "${offer.label}". ID transaction: ${txRef}. Mon numéro: ${payerPhone}. Réf demande: ${submitted.id}`
+    ? `Bonjour, je viens d'envoyer ${formatFCFA(offer.price)} via ${submitted.method.toUpperCase()} Mobile Money pour l'offre "${offer.label}". ID transaction: ${submitted.provider_tx_id}. Mon numéro: ${submitted.payer_phone}. Réf demande: ${submitted.id}`
     : "";
 
   return (
@@ -145,15 +168,16 @@ const Payment = () => {
           <ArrowLeft className="h-4 w-4" /> Retour aux offres
         </Link>
 
-        <Card className="p-6 mb-6 shadow-card">
+        <section className="mb-6 border-b pb-6">
           <div className="flex justify-between items-start gap-4 flex-wrap">
             <div>
-              <h1 className="text-2xl font-bold">{offer.label}</h1>
+              <h1 className="text-2xl font-bold">Paiement MasterLogPro</h1>
+              <p className="mt-1 font-medium">{offer.label}</p>
               <p className="text-sm text-muted-foreground">{offer.description}</p>
             </div>
             <div className="text-3xl font-bold text-accent">{formatFCFA(offer.price)}</div>
           </div>
-        </Card>
+        </section>
 
         {/* AFFILIATE CREDIT */}
         {credit > 0 && (
@@ -188,11 +212,11 @@ const Payment = () => {
             <h2 className="font-semibold">Mobile Money (MTN / Orange CM)</h2>
           </div>
 
-          {!submitted ? (
+          {requestLoading ? <div className="flex items-center gap-2 py-8 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Chargement du suivi…</div> : !submitted ? (
             <>
               <p className="text-xs text-muted-foreground mb-4">
                 Envoie le montant exact au numéro ci-dessous, puis renseigne ton numéro et l'ID de la transaction.
-                Ton compte sera activé dès vérification (généralement &lt; 30 min).
+                L’administrateur active ton abonnement après avoir confirmé la réception de l’argent.
               </p>
 
               <div className="grid grid-cols-2 gap-2 mb-4">
@@ -219,7 +243,7 @@ const Payment = () => {
                     <div className="text-lg font-mono font-bold">{targetNumber}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">Nom : {PAYMENT_NAME}</div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => copy(targetNumber, "Numéro")}>
+                  <Button size="sm" variant="outline" aria-label="Copier le numéro" title="Copier le numéro" onClick={() => copy(targetNumber, "Numéro")}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
@@ -228,7 +252,7 @@ const Payment = () => {
                     <div className="text-xs text-muted-foreground">Montant exact</div>
                     <div className="text-lg font-bold text-accent">{formatFCFA(offer.price)}</div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => copy(String(offer.price), "Montant")}>
+                  <Button size="sm" variant="outline" aria-label="Copier le montant" title="Copier le montant" onClick={() => copy(String(offer.price), "Montant")}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
@@ -236,37 +260,48 @@ const Payment = () => {
 
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs">Ton numéro Mobile Money</Label>
+                  <Label htmlFor="payer-phone" className="text-xs">Ton numéro Mobile Money</Label>
                   <Input
                     placeholder="ex: 6XXXXXXXX"
+                    id="payer-phone"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    maxLength={20}
                     value={payerPhone}
                     onChange={(e) => setPayerPhone(e.target.value)}
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">ID transaction (reçu SMS)</Label>
+                  <Label htmlFor="transaction-reference" className="text-xs">ID transaction (reçu SMS)</Label>
                   <Input
                     placeholder="ex: CR250511.1234.A56789"
+                    id="transaction-reference"
+                    maxLength={100}
                     value={txRef}
                     onChange={(e) => setTxRef(e.target.value)}
                   />
                 </div>
                 <Button onClick={submitMomo} disabled={submitting} className="w-full">
                   {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Confirmer mon paiement
+                  J’ai effectué le transfert
                 </Button>
               </div>
             </>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-accent">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-semibold">Demande enregistrée</span>
+                {submitted.status === "approved" ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+                <span className="font-semibold">{submitted.status === "approved" ? "Paiement validé" : submitted.status === "rejected" ? "Transfert non validé" : "En attente de validation"}</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Notre équipe vérifie ton paiement. Tu recevras une confirmation dès activation.
-                Pour accélérer, envoie un message WhatsApp avec ta référence.
+                {submitted.status === "approved" ? "Ton abonnement est actif." : submitted.status === "rejected" ? "Contacte l’administrateur pour vérifier les informations de ton transfert." : "La déclaration ne confirme pas l’encaissement. Ton abonnement sera activé après vérification du transfert."}
               </p>
+              <div className="rounded-md border bg-background p-3 text-sm space-y-2">
+                <p className="break-all"><span className="text-muted-foreground">Référence de la demande : </span>{submitted.id}</p>
+                <p className="break-all"><span className="text-muted-foreground">ID transaction : </span>{submitted.provider_tx_id}</p>
+                {submitted.admin_note && <p className="break-words"><span className="text-muted-foreground">Retour administrateur : </span>{submitted.admin_note}</p>}
+              </div>
+              <Button variant="outline" className="w-full" onClick={refreshRequest} disabled={requestLoading}><RefreshCw className="h-4 w-4 mr-2" />Actualiser le statut</Button>
               <a href={buildWhatsAppLink(waMessage)} target="_blank" rel="noreferrer">
                 <Button variant="outline" className="w-full">
                   <MessageCircle className="h-4 w-4 mr-2" />
@@ -276,6 +311,7 @@ const Payment = () => {
               <Button variant="ghost" className="w-full" onClick={() => navigate("/dashboard")}>
                 Aller au tableau de bord
               </Button>
+              {submitted.status !== "pending" && <Button variant="outline" className="w-full" onClick={() => { setSubmitted(null); setTxRef(""); }}>Déclarer un nouveau transfert</Button>}
             </div>
           )}
         </Card>
