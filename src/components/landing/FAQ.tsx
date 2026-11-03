@@ -9,7 +9,7 @@ const ITEMS = [
   },
   {
     q: "Combien coûte l'abonnement ?",
-    a: "1 500 FCFA par mois, le même prix pour tous les traders, débutants comme pros. Tu peux aussi payer 3, 6 ou 12 mois d'avance.",
+    a: "2 500 FCFA par mois, le même prix pour tous les traders, débutants comme pros. Tu peux aussi payer 3, 6 ou 12 mois d'avance.",
   },
   {
     q: "Comment se passe le paiement Mobile Money ?",

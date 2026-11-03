@@ -10,8 +10,8 @@ export const MOBILE_MONEY = {
 export type OfferKey = "formation" | "sub_1m" | "sub_3m" | "sub_6m" | "sub_12m";
 
 // ─── Pricing ─────────────────────────────────────────────────
-// Formation supprimée. Abonnement unique : 1 500 FCFA / mois pour tous les traders.
-export const MONTHLY_PRICE = 1500;
+// Formation supprimée. Abonnement unique : 2 500 FCFA / mois pour tous les traders.
+export const MONTHLY_PRICE = 2500;
 export const PUBLIC_OFFERS: OfferKey[] = ["sub_1m", "sub_3m", "sub_6m", "sub_12m"];
 const MONTHS: Record<OfferKey, number> = { formation: 1, sub_1m: 1, sub_3m: 3, sub_6m: 6, sub_12m: 12 };
 

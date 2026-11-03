@@ -51,9 +51,9 @@ export function AppHeader() {
               <NavLink to="/leaderboard" className={linkCls}>Classement</NavLink>
               <NavLink to="/forum" className={linkCls}>Forum</NavLink>
               <NavLink to="/calculateur" className={linkCls}>Calculateur</NavLink>
-              {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls}>Exercices</NavLink>}
-              {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls}>Analyse</NavLink>}
-              {!isStudent && !isAdmin && <NavLink to="/subscribe" className={linkCls}>Offres</NavLink>}
+              {<NavLink to="/exercises" className={linkCls}>Exercices</NavLink>}
+              {isAdmin && <NavLink to="/analyse" className={linkCls}>Analyse</NavLink>}
+              {!isAdmin && <NavLink to="/subscribe" className={linkCls}>Offres</NavLink>}
               <NavLink to="/affiliate" className={linkCls}>Affilié</NavLink>
               {isAdmin && (
                 <NavLink
@@ -117,9 +117,9 @@ export function AppHeader() {
                 <NavLink to="/leaderboard" className={linkCls} onClick={() => setOpen(false)}>Classement</NavLink>
                 <NavLink to="/forum" className={linkCls} onClick={() => setOpen(false)}>Forum</NavLink>
                 <NavLink to="/calculateur" className={linkCls} onClick={() => setOpen(false)}>Calculateur</NavLink>
-                {(isStudent || isAdmin) && <NavLink to="/exercises" className={linkCls} onClick={() => setOpen(false)}>Exercices</NavLink>}
-                {(isStudent || isAdmin) && <NavLink to="/analyse" className={linkCls} onClick={() => setOpen(false)}>Analyse</NavLink>}
-                {!isStudent && !isAdmin && <NavLink to="/subscribe" className={linkCls} onClick={() => setOpen(false)}>Offres</NavLink>}
+                {<NavLink to="/exercises" className={linkCls} onClick={() => setOpen(false)}>Exercices</NavLink>}
+                {isAdmin && <NavLink to="/analyse" className={linkCls} onClick={() => setOpen(false)}>Analyse</NavLink>}
+                {!isAdmin && <NavLink to="/subscribe" className={linkCls} onClick={() => setOpen(false)}>Offres</NavLink>}
                 <NavLink to="/affiliate" className={linkCls} onClick={() => setOpen(false)}>Affilié</NavLink>
                 <NavLink to="/profile" className={linkCls} onClick={() => setOpen(false)}>Profil</NavLink>
                 {isAdmin && (

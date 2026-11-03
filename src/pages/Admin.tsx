@@ -322,7 +322,6 @@ function UserManageDialog({ user, onClose, onChanged }: { user: UserRow | null; 
                 <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">admin</SelectItem>
-                  <SelectItem value="student">student</SelectItem>
                   <SelectItem value="subscriber">subscriber</SelectItem>
                 </SelectContent>
               </Select>
@@ -463,7 +462,6 @@ function InviteUserDialog({ open, onClose, onInvited }: { open: boolean; onClose
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="subscriber">💳 Abonné</SelectItem>
-                    <SelectItem value="student">🎓 Étudiant</SelectItem>
                     <SelectItem value="admin">🛡️ Admin</SelectItem>
                   </SelectContent>
                 </Select>

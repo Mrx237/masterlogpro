@@ -227,7 +227,7 @@ const Dashboard = () => {
             <Lock className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
             <h2 className="font-display text-xl font-bold mb-2">Accès au journal verrouillé</h2>
             <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
-              Souscris à l'abonnement (1 500 FCFA/mois) pour accéder au journal complet.
+              Souscris à l'abonnement (2 500 FCFA/mois) pour accéder au journal complet.
             </p>
             <div className="flex gap-2 justify-center flex-wrap">
               <Button asChild className="bg-gradient-brand text-primary-foreground border-0"><Link to="/subscribe">Voir les offres</Link></Button>

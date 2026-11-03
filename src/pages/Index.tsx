@@ -233,7 +233,7 @@ const Index = () => {
             tone="subscriber"
             kicker="Abonnement Journal"
             title="Suivre tes trades."
-            price={`${formatFCFA(1500)} / mois`}
+            price={`${formatFCFA(2500)} / mois`}
             priceNote="Mensuel · trimestriel · annuel"
             description="Débutant ou pro : un outil pro pour documenter et mesurer ta performance."
             features={[
@@ -264,7 +264,7 @@ const Index = () => {
           <div className="grid md:grid-cols-4 gap-4">
             {[
               { n: "01", t: "Inscription", d: "Crée ton compte en 30 secondes." },
-              { n: "02", t: "Choix offre", d: "Abonnement 1 500 FCFA/mois." },
+              { n: "02", t: "Choix offre", d: "Abonnement 2 500 FCFA/mois." },
               { n: "03", t: "Mobile Money", d: "MTN, Orange, Airtel." },
               { n: "04", t: "Activation", d: "Validation WhatsApp en 5 min." },
             ].map((s, i) => (
