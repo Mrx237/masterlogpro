@@ -6,6 +6,7 @@
 - [x] Username field in profile, @name shown in forum, mention highlight and suggestions.
 
 # Manual Mobile Money payments
-- [ ] Improve transfer submission and persisted request tracking.
-- [ ] Verify administrator review and existing subscription activation.
-- [ ] Test the transfer flow and approval safeguards.
+- [x] Improve transfer submission and persisted request tracking.
+- [x] Inspect live administrator policies and activation trigger; remove duplicate client-side activation.
+- [x] Test authenticated declaration, reload and rejection readback; payment rules tests pass.
+- [ ] Exercise approval through the admin page — requires an authorized admin session; current session is a non-admin member.
