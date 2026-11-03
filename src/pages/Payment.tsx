@@ -126,13 +126,22 @@ const Payment = () => {
           cancel_url: `${window.location.origin}/payment?offer=${offerKey}`,
         },
       });
-      if (error || !data?.success) throw new Error(data?.error || error?.message || "Échec");
+      if (error) {
+        let message = error.message;
+        if ("context" in error && error.context instanceof Response) {
+          const detail = await error.context.json().catch(() => null);
+          message = detail?.error || message;
+        }
+        throw new Error(message);
+      }
+      if (!data?.success) throw new Error(data?.error || "Impossible de créer la facture crypto");
       if (!data.invoice_url) throw new Error("Lien NOWPayments indisponible");
       setCryptoInvoiceUrl(data.invoice_url);
       toast.success("Redirection vers la page de paiement...");
       window.location.assign(data.invoice_url);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Paiement crypto indisponible");
+    } finally {
       setCryptoLoading(false);
     }
   }
@@ -323,7 +332,7 @@ const Payment = () => {
             <h2 className="font-semibold">Cryptomonnaie (BTC, USDT, ETH...)</h2>
           </div>
           <p className="text-xs text-muted-foreground mb-4">
-            Paiement automatique via NOWPayments — activation instantanée après confirmation réseau.
+            Paiement via NOWPayments — activation après paiement finalisé. Montant converti en USD ; frais réseau éventuels.
           </p>
           <Button onClick={payCrypto} disabled={cryptoLoading} variant="outline" className="w-full">
             {cryptoLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}

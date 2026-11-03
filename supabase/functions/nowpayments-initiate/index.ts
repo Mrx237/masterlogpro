@@ -1,30 +1,27 @@
 // NOWPayments initiate — crée une facture crypto, retourne URL hosted checkout
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { cryptoOffer } from "../_shared/cryptoPayments.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Prix offres en USD (≈ équivalent FCFA / 600)
-const OFFER_USD: Record<string, { price_usd: number; price_fcfa: number }> = {
-  formation: { price_usd: 85, price_fcfa: 50000 },
-  sub_1m: { price_usd: 17, price_fcfa: 10000 },
-  sub_3m: { price_usd: 42, price_fcfa: 25000 },
-  sub_6m: { price_usd: 75, price_fcfa: 45000 },
-  sub_12m: { price_usd: 135, price_fcfa: 80000 },
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Méthode non autorisée" }, 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    const backendUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!backendUrl || !anonKey || !serviceKey) return json({ error: "Service de paiement indisponible" }, 503);
 
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
+      backendUrl,
+      anonKey,
       { global: { headers: { Authorization: authHeader } } }
     );
     const { data: userData, error: userErr } = await supabase.auth.getUser();
@@ -33,15 +30,16 @@ Deno.serve(async (req) => {
     const email = userData.user.email;
 
     const { offer, success_url, cancel_url } = await req.json();
-    const cfg = OFFER_USD[offer];
+    const cfg = typeof offer === "string" ? cryptoOffer(offer) : null;
     if (!cfg) return json({ error: "Offre invalide" }, 400);
 
     const apiKey = Deno.env.get("NOWPAYMENTS_API_KEY");
     if (!apiKey) return json({ error: "NOWPayments non configuré" }, 500);
+    if (!Deno.env.get("NOWPAYMENTS_IPN_SECRET")) return json({ error: "Confirmation crypto non configurée" }, 503);
 
     const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      backendUrl,
+      serviceKey
     );
 
     // Créer payment_request pending
@@ -88,7 +86,11 @@ Deno.serve(async (req) => {
       return json({ error: npData?.message || "NOWPayments échec" }, 400);
     }
 
-    await admin
+    if (typeof npData.invoice_url !== "string" || !npData.invoice_url.startsWith("https://nowpayments.io/") || !npData.id) {
+      await admin.from("payment_requests").update({ status: "rejected", provider_status: "invalid_invoice" }).eq("id", pr.id);
+      return json({ error: "NOWPayments n’a pas fourni de facture valide" }, 502);
+    }
+    const { error: saveError } = await admin
       .from("payment_requests")
       .update({
         provider_tx_ref: String(npData.id),
@@ -97,6 +99,7 @@ Deno.serve(async (req) => {
         metadata: npData,
       })
       .eq("id", pr.id);
+    if (saveError) return json({ error: "Impossible d’enregistrer la facture crypto" }, 500);
 
     return json({
       success: true,
