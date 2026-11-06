@@ -57,7 +57,7 @@ export default function NewsDetail() {
     </div>
   );
 
-  const a = generateAnalysis({ title: n.title, currency: n.currency, impact: n.impact, sentiment: n.sentiment });
+  const a = generateAnalysis({ title: n.title, currency: n.currency, impact: n.impact, sentiment: n.sentiment, actual: n.actual, forecast: n.forecast, previous: n.previous });
   const SentIcon = n.sentiment === "bullish" ? TrendingUp : n.sentiment === "bearish" ? TrendingDown : Minus;
   const sentColor = n.sentiment === "bullish" ? "text-emerald-400" : n.sentiment === "bearish" ? "text-rose-400" : "text-muted-foreground";
   const impactColor = n.impact === "high" ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
@@ -113,6 +113,30 @@ export default function NewsDetail() {
               </div>
             </div>
 
+            {/* Comprendre l'indicateur */}
+            <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">📘 Comprendre : {a.indicator.name}</div>
+              <p>{a.indicator.explain}</p>
+              <p className="text-muted-foreground mt-1">{a.indicator.why}</p>
+            </div>
+
+            {a.surprise && (
+              <div className="rounded-lg border border-primary/40 bg-primary/10 p-3" dangerouslySetInnerHTML={{ __html: "📢 " + renderBold(a.surprise) }} />
+            )}
+
+            {/* Scénarios */}
+            <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">🔀 Scénarios possibles</div>
+              <div className="space-y-2">
+                {a.scenarios.map((s) => (
+                  <div key={s.label} className="flex gap-2">
+                    <span className={`font-mono text-xs shrink-0 ${s.tone === "up" ? "text-emerald-400" : s.tone === "down" ? "text-rose-400" : "text-amber-400"}`}>{s.label}</span>
+                    <span className="text-sm">{s.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Interprétation */}
             <div className="rounded-lg border border-border/60 bg-background/40 p-3">
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
@@ -158,6 +182,14 @@ export default function NewsDetail() {
                 </div>
               </div>
             )}
+
+            {/* Préparation */}
+            <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">✅ Plan de préparation</div>
+              <ol className="list-decimal pl-5 space-y-1 text-sm">
+                {a.checklist.map((c) => <li key={c}>{c}</li>)}
+              </ol>
+            </div>
 
             {/* Avertissement */}
             <p className="text-xs text-muted-foreground italic" dangerouslySetInnerHTML={{ __html: renderBold(a.warning) }} />
